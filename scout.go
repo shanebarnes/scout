@@ -3,87 +3,87 @@ package main
 import (
     "bytes"
     "encoding/json"
+    "errors"
+    "flag"
     "fmt"
     "golang.org/x/crypto/ssh"
     "io/ioutil"
     "log"
     "os"
-    "strconv"
+    "os/signal"
     "strings"
+    "syscall"
     "sync"
     "time"
 
     gc "github.com/rthornton128/goncurses"
 )
 
-type Subject struct {
-    Name string `json:"name"`
-    Addr string `json:"addr"`
-    User string `json:"user"`
-    Pass string `json:"pass"`
-    Cert string `json:"cert"`
-}
+const _VERSION string = "0.1.0"
+var _stdscr *gc.Window = nil
 
-type Conf struct {
-    Report string `json:"report"`
-    Label string `json:"label"`
-    Subjects []Subject `json:"subjects"`
+func sigHandler(ch *chan os.Signal) {
+    sig := <-*ch
+    gc.End()
+    fmt.Println("Captured sig", sig)
+    os.Exit(3)
 }
-
-type Report struct {
-    Timestamp uint64
-    Value     uint64
-    Rate      uint64
-}
-
-var stdscr *gc.Window = nil
 
 func main() {
-    var err1 error
-    stdscr, err1 = gc.Init()
-    if err1 != nil {
-        log.Fatal(err1)
+    sigs := make(chan os.Signal, 1)
+    signal.Notify(sigs,
+                  syscall.SIGHUP,
+                  syscall.SIGINT,
+                  syscall.SIGQUIT,
+                  syscall.SIGABRT,
+                  syscall.SIGKILL,
+                  syscall.SIGSEGV,
+                  syscall.SIGTERM,
+                  syscall.SIGSTOP)
+    go sigHandler(&sigs)
+
+    initLog()
+    initGui()
+    order := loadOrder()
+
+    arr, err := parseSituation(&order.Situation)
+    if (err != nil ) {
+        fmt.Println(err)
+        os.Exit(1)
     }
-    defer gc.End()
 
-    initializeWindow()
-    conf := readConfig()
-
-    clients := make([]*ssh.Client, len(conf.Subjects))
-
-    for key, val := range conf.Subjects {
-        clients[key] = connectSubject(&val)
+    tasks, err2 := parseExecution(&order.Execution)
+    if (err2 != nil ) {
+        fmt.Println(err2)
+        os.Exit(1)
     }
 
-    var wg sync.WaitGroup
-    channels := make([]chan uint64, len(clients))
-    reports := make([]Report, len(clients))
+    targets := findTargets(&arr)
 
-    for i := range channels {
-        channels[i] = make(chan uint64, 2)
-        reports[i] = Report{Timestamp:0, Value:0, Rate:0}
+    reports :=  make([]database, len(targets) * len(tasks))
+    for i := range reports {
+        reports[i] = NewDataBase(arr[i].Target.Name, tasks[i].Cmd, tasks[i].Scale, tasks[i].Units)
     }
 
     for {
-        wg.Add(len(channels))
-        for key, val := range clients {
-            go observeSubject(val, conf.Report, &wg, &channels[key])
-        }
-        wg.Wait()
-
-        for i := range channels {
-            timestamp := <-channels[i]
-            value := <-channels[i]
-            evaluateSubject(timestamp, value, &reports[i])
-        }
-
-        reportSubjects(conf, reports)
-
+        watchTargets(targets, &tasks, &reports)
         time.Sleep(time.Millisecond * 500)
     }
 }
 
-func initializeWindow() {
+func initLog() {
+    log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+}
+
+func initGui() {
+    var err error
+    _stdscr, err = gc.Init()
+    if err != nil {
+        gc.End()
+        log.Fatal(err)
+    }
+    defer gc.End()
+
     gc.Echo(false)
     gc.CBreak(true)
     gc.Cursor(0)
@@ -95,40 +95,171 @@ func initializeWindow() {
     gc.InitPair(gc.C_CYAN, gc.C_CYAN, gc.C_BLACK)
 }
 
-func readConfig() Conf {
-    file, _ := os.Open("config.json")
-    decoder := json.NewDecoder(file)
-    config := Conf{}
-    err := decoder.Decode(&config)
-    if err != nil {
-        fmt.Println("error: ", err)
+func getPrettyJson(v interface{}) string {
+    buffer, err := json.MarshalIndent(v, "", "    ")
+    if (err != nil) {
+
     }
-    return config
+    return string(buffer)
 }
 
-func connectSubject(subject *Subject) *ssh.Client {
+func loadOrder() Order {
+    option := flag.String("order", "order.json", "file containing scouting operations order")
+    flag.Usage = func() {
+        fmt.Fprintf(os.Stderr, "version %s\n", _VERSION)
+        fmt.Fprintln(os.Stderr, "usage:")
+        flag.PrintDefaults()
+    }
+    flag.Parse()
+
+    file, _ := os.Open(*option)
+    decoder := json.NewDecoder(file)
+    order := Order{}
+    err := decoder.Decode(&order)
+    if err != nil {
+        fmt.Println("error: ", err)
+    } else {
+        //log.Println(getPrettyJson(order))
+    }
+    //log.Println("Targets:", len(order.Situation.Targets))
+    //log.Println("Tasks  :", len(order.Execution.Tasks))
+    return order
+}
+
+func parseSituation(situation *Situation) (TargetArr, error) {
+    size := len(situation.Targets)
+    ret := make(TargetArr, size)
+    var err error = nil
+    definitions := situation.Definitions
+    credentials := situation.Credentials
+
+    for i, id := range situation.Targets {
+        var exists bool
+        var target Target
+        if target, exists = definitions[id]; exists {
+            ret[i].Target = target
+        } else {
+            err = errors.New("Target '" + id + "' is not found in definitions")
+            break
+        }
+
+        var cred Credentials
+        if cred, exists = credentials[target.Cred]; exists {
+            ret[i].Credentials = cred
+        } else {
+            err = errors.New("Target '" + id + "' credentials '" + target.Cred + "' not found")
+            break
+        }
+    }
+
+    if size == 0 && err == nil {
+        err = errors.New("No targets found")
+    }
+
+    return ret, err
+}
+
+func parseExecution(execution *Execution1) (TaskArr, error) {
+    size := len(execution.Tasks)
+    ret := make(TaskArr, size)
+    var err error = nil
+    tasks := execution.Tasks
+    definitions := execution.Definitions
+
+    var i int = 0
+    for _, task := range tasks {
+        var def Task
+        var exists bool
+        if def, exists = definitions[task.Task]; exists {
+            if len(task.Vars) == len(def.Vars) {
+                cmd := def.Task
+                for j, param := range task.Vars {
+                    cmd = strings.Replace(cmd, def.Vars[j], param, 1)
+                }
+                ret[i].Exec = task
+                ret[i].Cmd = cmd
+                ret[i].Ret = def.Type
+                ret[i].Scale = task.Scale
+                ret[i].Units = task.Units
+            } else {
+                err = errors.New("Task '" + task.Task + "' vars do not match definitions")
+                break
+            }
+        } else {
+            err = errors.New("Task '" + task.Task + "' is not found in definitions")
+            break
+        }
+
+        i++
+    }
+
+    if size == 0 && err == nil {
+        err = errors.New("No tasks found")
+    } else {
+        i = 0
+        for _, task := range ret {
+            if task.Exec.Active {
+                ret[i] = task
+                i++
+            }
+        }
+        if i == 0 {
+            err = errors.New("No active tasks found")
+        } else {
+            ret = ret[:i]
+        }
+    }
+
+    return ret, err
+}
+
+func findTargets(arr *TargetArr) []*ssh.Client {
+    size := len(*arr)
+    clients := make([]*ssh.Client, size)
+    channels := make([]chan *ssh.Client, size)
+    //var wg sync.WaitGroup
+    //wg.Add(count)
+
+    for i := range *arr {
+        _stdscr.MovePrintf(0, 0, "Connecting to %s...\n", (*arr)[i].Target.Addr)
+        _stdscr.Refresh()
+
+        channels[i] = make(chan *ssh.Client)
+        go connectTarget(&(*arr)[i], /*&wg,*/ &channels[i])
+    }
+
+    //wg.Wait()
+    for i := range channels {
+        //select {
+            /*case*/ clients[i] = <-channels[i]/*:*/
+        //    default:
+        //}
+    }
+
+    return clients
+}
+
+func connectTarget(target *TargetEntry, /*wg *sync.WaitGroup,*/ ch *chan *ssh.Client) {
+    //defer wg.Done()
     var client *ssh.Client = nil
     var config *ssh.ClientConfig = nil
 
-    stdscr.MovePrintf(0, 0, "Connecting to %s...\n", subject.Addr)
-    stdscr.Refresh()
-
-    if len(subject.Pass) > 0 {
+    if len(target.Credentials.Pass) > 0 {
         config = &ssh.ClientConfig {
-            User: subject.User,
+            User: target.Credentials.User,
             Auth: []ssh.AuthMethod {
-                ssh.Password(subject.Pass),
+                ssh.Password(target.Credentials.Pass),
             },
             Timeout: 2000 * time.Millisecond,
         }
-    } else if len(subject.Cert) > 0 {
-        file, _ := ioutil.ReadFile(subject.Cert)
-        signer, err3 := ssh.ParsePrivateKey(file)
-        if err3 != nil {
-            log.Fatal(err3)
+    } else if len(target.Credentials.Cert) > 0 {
+        file, _ := ioutil.ReadFile(target.Credentials.Cert)
+        signer, err := ssh.ParsePrivateKey(file)
+        if err != nil {
+            log.Fatal(err)
         }
         config = &ssh.ClientConfig {
-            User: subject.User,
+            User: target.Credentials.User,
             Auth: []ssh.AuthMethod {
                 ssh.PublicKeys(signer),
             },
@@ -136,15 +267,48 @@ func connectSubject(subject *Subject) *ssh.Client {
         }
     }
 
-    client, err := ssh.Dial("tcp", subject.Addr + ":22", config)
+    client, err := ssh.Dial("tcp", target.Target.Addr + ":22", config)
     if err != nil {
         log.Fatal("Failed to dial: ", err)
+    } else {
+        //select {
+        /*    case*/ *ch <- client/*:*/
+        //    default:
+        //}
     }
-
-    return client
 }
 
-func observeSubject(client *ssh.Client, cmd string, wg *sync.WaitGroup, data *chan uint64) {
+func watchTargets(targets []*ssh.Client, tasks *TaskArr, reports *[]database) {
+    var wg sync.WaitGroup
+    channels := make([]chan string, len(targets))
+
+    wg.Add(len(targets))
+    for i, target := range targets {
+        channels[i] = make(chan string, 10)
+        go observeTarget(target, (*tasks)[0].Cmd, &wg, &channels[i])
+    }
+    wg.Wait()
+
+    for i := range channels {
+        value := <-channels[i]
+        timeval := uint64(time.Now().UnixNano()) / uint64(time.Millisecond)
+
+        dp, _ := NewDataPoint(timeval, value)
+        Evaluate(&dp, &(*reports)[i])
+        //switch (*tasks)[0].Ret {
+        //    case "bool":
+        //    case "float64":
+        //    case "int64":
+        //    case "uint64":
+        //    default:
+        //        _stdscr.MovePrintf(10, 0, "Unknown return type: %s, %s", (*tasks)[0].Ret, value)
+        //        _stdscr.Refresh()
+        //}
+    }
+    reportTargets(reports)
+}
+
+func observeTarget(client *ssh.Client, cmd string, wg *sync.WaitGroup, ch *chan string) {
     defer wg.Done()
     session, err := client.NewSession()
     if err != nil {
@@ -158,68 +322,56 @@ func observeSubject(client *ssh.Client, cmd string, wg *sync.WaitGroup, data *ch
         log.Fatal("Failed to run: " + err.Error())
     }
 
+    val := strings.Trim(b.String(), " \n")
     select {
-        case *data <- uint64(time.Now().UnixNano()) / uint64(time.Millisecond):
+        case *ch <- val:
         default:
     }
-
-    if num, err := strconv.ParseUint(strings.Trim(b.String(), " \n"), 10, 64); err == nil {
-        select {
-            case *data <- num:
-            default:
-        }
-    }
 }
 
-func evaluateSubject(timestamp uint64, value uint64, report *Report) {
-    report.Rate = (value - report.Value) * 8 / (timestamp - report.Timestamp) / 1000
-    report.Timestamp = timestamp
-    report.Value = value
-}
-
-func reportSubjects(conf Conf, reports []Report) {
+func reportTargets(reports *[]database) {
     var maxTicks int = 20
     var yScale uint64 = 50
     var total uint64 = 0
-    stdscr.Move(0,0)
+    _stdscr.Move(0,0)
 
-    for i := range reports {
+    for i := range *reports {
         x := 0
-        stdscr.MovePrintf(i, x, "%-15s", conf.Subjects[i].Addr)
+        _stdscr.MovePrintf(i, x, "%-15s", (*reports)[i].target)
 
         x += 15
-        stdscr.MovePrintln(i, x, "[")
+        _stdscr.MovePrintln(i, x, "[")
 
         x += 1
-        ticks := reports[i].Rate / yScale
+        ticks := uint64((*reports)[i].rate) / yScale
 
         for j := 0; j < maxTicks; j++ {
             if (j * 100 / maxTicks >= 66) {
-                stdscr.ColorOn(gc.C_RED)
+                _stdscr.ColorOn(gc.C_RED)
             } else if (j * 100 / maxTicks >= 33) {
-                stdscr.ColorOn(gc.C_YELLOW)
+                _stdscr.ColorOn(gc.C_YELLOW)
             } else {
-                stdscr.ColorOn(gc.C_CYAN)
+                _stdscr.ColorOn(gc.C_CYAN)
             }
 
             if int(ticks) > j {
-                stdscr.MovePrintln(i, x, "|")
+                _stdscr.MovePrintln(i, x, "|")
             } else {
-                stdscr.MovePrintln(i, x, " ")
+                _stdscr.MovePrintln(i, x, " ")
             }
 
             x++
         }
 
-        stdscr.ColorOff(gc.C_RED)
-        stdscr.ColorOff(gc.C_YELLOW)
-        stdscr.ColorOff(gc.C_CYAN)
-        stdscr.MovePrintf(i, x, "%6d Mbps] %s\n", reports[i].Rate, conf.Report)
+        _stdscr.ColorOff(gc.C_RED)
+        _stdscr.ColorOff(gc.C_YELLOW)
+        _stdscr.ColorOff(gc.C_CYAN)
+        _stdscr.MovePrintf(i, x, "%6d %s] %s\n", uint64((*reports)[i].rate), (*reports)[i].units, (*reports)[i].task)
 
-        total += reports[i].Rate
+        total += uint64((*reports)[i].rate)
     }
 
-    stdscr.MovePrintf(len(reports), 0,  "%-15s", "Total")
-    stdscr.MovePrintf(len(reports), 36, "%6d Mbps\n", total)
-    stdscr.Refresh()
+    _stdscr.MovePrintf(len(*reports), 0,  "%-15s", "Total")
+    _stdscr.MovePrintf(len(*reports), 36, "%6d Mbps\n", total)
+    _stdscr.Refresh()
 }

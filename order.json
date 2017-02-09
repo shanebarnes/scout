@@ -1,0 +1,74 @@
+{
+    "mission": "aws cluster network activity monitoring",
+    "situation": {
+        "targets": [ "T68" ],
+        "definitions": {
+            "T68": {
+                "name": "virtual box",
+                "addr": "192.168.1.68",
+                "cred": "FEDORA25"
+            }
+        },
+        "credentials": {
+            "FEDORA25": {
+                "user": "user",
+                "pass": "pass",
+                "cert": "cert.pem"
+            }
+        }
+    },
+    "execution": {
+        "tasks": {
+            "ENP0S3_RX_RATE": {
+                "active": true,
+                "task": "NET_RX_BYTES",
+                "vars": [ "enp0s3" ],
+                "reports": [ "RATE" ],
+                "scale": 8,
+                "units": "bps"
+            }
+        },
+        "definitions": {
+            "ALL_CPU_USE": {
+                "desc": "all cpu use",
+                "reqs": [ "grep", "aws" ],
+                "vars": [],
+                "type": "float64",
+                "task": "grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
+            },
+            "CORE_CPU_USE": {
+                "desc": "core cpu use",
+                "reqs": [ "grep", "aws" ],
+                "vars": [ "#VAR1#" ],
+                "type": "float64",
+                "task": "grep 'cpu#VAR1#' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
+            },
+            "NET_RX_BYTES": {
+                "desc": "net rx bytes",
+                "reqs": [ "cat" ],
+                "vars": [ "#VAR1#" ],
+                "type": "uint64",
+                "task": "cat /sys/class/net/#VAR1#/statistics/rx_bytes"
+            },
+            "NET_TX_BYTES": {
+                "desc": "net tx bytes",
+                "reqs": [ "cat" ],
+                "vars": [ "#VAR1#" ],
+                "type": "uint64",
+                "task": "cat /sys/class/net/#VAR1#/statistics/tx_bytes"
+            }
+        }
+    },
+    "sustainment": { "protocol": [ "exec", "ssh" ] },
+    "control": {
+        "frequency": "500",
+        "duration": "0",
+        "reports" : {
+            "AVG": { "op": "x / t" },
+            "MIN": { "op": "x < x0" },
+            "MAX": { "op": "x > x0" },
+            "RATE": { "op": "(x - x0) / (t - t0)" },
+            "RAW": { "op": "x" }
+        }
+    }
+}
