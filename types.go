@@ -11,6 +11,7 @@ type Target struct {
     Name string `json:"name"`
     Addr string `json:"addr"`
     Cred string `json:"cred"`
+    Prot string `json:"prot"`
 }
 type TargetMap map[string]Target
 
