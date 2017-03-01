@@ -85,18 +85,6 @@ func main() {
     }
     ReportThread(targets)
     wg.Wait()
-    //time.Sleep(time.Millisecond * 15000)
-    //targets := findTargets(&arr)
-
-    //reports :=  make([]database, len(targets) * len(tasks))
-    //for i := range reports {
-    //    reports[i] = NewDataBase(arr[i].Target.Name, tasks[i].Cmd, tasks[i].Scale, tasks[i].Units)
-    //}
-
-    //for {
-    //    watchTargets(targets, &tasks, &reports)
-    //    time.Sleep(time.Millisecond * 500)
-    //}
 }
 
 func initLog() {
@@ -205,6 +193,7 @@ func parseExecution(execution *Execution1) (TaskArr, error) {
                     cmd = strings.Replace(cmd, def.Vars[j], param, 1)
                 }
                 ret[i].Exec = task
+                ret[i].Sys = def.Sys
                 ret[i].Cmd = cmd
                 ret[i].Ret = def.Type
                 ret[i].Scale = task.Scale

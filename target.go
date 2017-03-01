@@ -20,7 +20,7 @@ type target interface {
     Find() error
     Watch() error
     Report() (*database, error)
-    TaskCount() int
+    GetImpl() *TargetImpl
     IsLost() bool
 }
 
@@ -28,10 +28,19 @@ func NewImpl(t *TargetImpl, conf TargetEntry, tasks TaskArr) error {
     var err error = nil
 
     t.conf = conf
-    t.task = tasks
-    t.db =  make([]database, len(tasks))
+
+    // Todo: move to scout parsing
+    for i := range tasks {
+        for j := range conf.Target.Sys {
+            if conf.Target.Sys[j] == tasks[i].Sys {
+                t.task = append(t.task, tasks[i])
+            }
+        }
+    }
+
+    t.db =  make([]database, len(t.task))
     for i := range t.db {
-        t.db[i] = NewDataBase(conf.Target.Name, tasks[i].Cmd, tasks[i].Scale, tasks[i].Units)
+        t.db[i] = NewDataBase(conf.Target.Name, t.task[i].Cmd, t.task[i].Scale, t.task[i].Units)
     }
 
     return err

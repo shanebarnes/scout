@@ -7,13 +7,15 @@
                 "name": "virtual box",
                 "addr": "192.168.1.83",
                 "cred": "FEDORA25",
-                "prot": "SSH"
+                "prot": "SSH",
+                "sys": [ "LINUX" ]
             },
             "MAC1": {
                 "name": "macOS",
                 "addr": "",
                 "cred": "EXEC",
-                "prot": "EXEC"
+                "prot": "EXEC",
+                "sys": [ "MACOS" ]
             }
         },
         "credentials": {
@@ -31,6 +33,14 @@
     },
     "execution": {
         "tasks": {
+            "ALL_CPU_USE": {
+                "active": true,
+                "task": "MACOS_ALL_CPU_USE",
+                "vars": [],
+                "reports": [ "RATE" ],
+                "scale": 1,
+                "units": "%"
+            },
             "ENP0S3_RX_RATE": {
                 "active": true,
                 "task": "LINUX_NET_RX_BYTES",
@@ -46,10 +56,19 @@
                 "reports": [ "RATE" ],
                 "scale": 8,
                 "units": "bps"
+            },
+            "EN0_TX_RATE": {
+                "active": true,
+                "task": "MACOS_NET_TX_BYTES",
+                "vars": [ "en0" ],
+                "reports": [ "RATE" ],
+                "scale": 8,
+                "units": "bps"
             }
         },
         "definitions": {
             "LINUX_ALL_CPU_USE": {
+                "sys": "LINUX",
                 "desc": "all cpu use",
                 "reqs": [ "awk", "grep" ],
                 "vars": [],
@@ -57,6 +76,7 @@
                 "task": "grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
             },
             "LINUX_CORE_CPU_USE": {
+                "sys": "LINUX",
                 "desc": "core cpu use",
                 "reqs": [ "awk", "grep" ],
                 "vars": [ "#VAR1#" ],
@@ -64,6 +84,7 @@
                 "task": "grep 'cpu#VAR1#' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
             },
             "LINUX_NET_RX_BYTES": {
+                "sys": "LINUX",
                 "desc": "net rx bytes",
                 "reqs": [ "cat" ],
                 "vars": [ "#VAR1#" ],
@@ -71,13 +92,23 @@
                 "task": "cat /sys/class/net/#VAR1#/statistics/rx_bytes"
             },
             "LINUX_NET_TX_BYTES": {
+                "sys": "LINUX",
                 "desc": "net tx bytes",
                 "reqs": [ "cat" ],
                 "vars": [ "#VAR1#" ],
                 "type": "uint64",
                 "task": "cat /sys/class/net/#VAR1#/statistics/tx_bytes"
             },
+            "MACOS_ALL_CPU_USE": {
+                "sys": "MACOS",
+                "desc": "all cpu use",
+                "reqs": [ "awk", "top" ],
+                "vars": [],
+                "type": "float64",
+                "task": "top -l 1 -n 0 | awk '/^CPU usage/ {print $3+$5;}'"
+            },
             "MACOS_NET_RX_BYTES": {
+                "sys": "MACOS",
                 "desc": "net rx bytes",
                 "reqs": [ "awk", "netstat" ],
                 "vars": [ "#VAR1#" ],
@@ -85,6 +116,7 @@
                 "task": "netstat -ibn -I #VAR1# | awk '//{i++}i==2{print $7;exit}'"
             },
             "MACOS_NET_TX_BYTES": {
+                "sys": "MACOS",
                 "desc": "net tx bytes",
                 "reqs": [ "awk", "netstat" ],
                 "vars": [ "#VAR1#" ],

@@ -61,8 +61,8 @@ func (t *TargetExec) Report() (*database, error) {
     return ReportImpl(&t.impl)
 }
 
-func (t *TargetExec) TaskCount() int {
-    return len(t.impl.task)
+func (t *TargetExec) GetImpl() *TargetImpl {
+    return &t.impl
 }
 
 func (t *TargetExec) IsLost() bool {

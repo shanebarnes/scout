@@ -97,8 +97,8 @@ func (t *TargetSsh) Report() (*database, error) {
     return ReportImpl(&t.impl)
 }
 
-func (t *TargetSsh) TaskCount() int {
-    return len(t.impl.task)
+func (t *TargetSsh) GetImpl() *TargetImpl {
+    return &t.impl
 }
 
 func (t *TargetSsh) IsLost() bool {

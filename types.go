@@ -12,6 +12,7 @@ type Target struct {
     Addr string `json:"addr"`
     Cred string `json:"cred"`
     Prot string `json:"prot"`
+    Sys []string `json:"sys"`
 }
 type TargetMap map[string]Target
 
@@ -20,8 +21,9 @@ type TargetEntry struct {
     Credentials Credentials
 }
 type TargetArr []TargetEntry
-
+// define task as operation instead
 type Task struct {
+    Sys string `json:"sys"`
     Desc string `json:"desc"`
     Reqs []string `json:"reqs"`
     Vars []string `json:"vars"`
@@ -32,6 +34,7 @@ type TaskMap map[string]Task
 
 type TaskEntry struct {
     Exec Execution
+    Sys string
     Cmd string
     Ret string
     Scale float64
