@@ -11,7 +11,7 @@
                 "sys": [ "LINUX" ]
             },
             "MAC1": {
-                "name": "macOS",
+                "name": "MacBook Pro",
                 "addr": "",
                 "cred": "EXEC",
                 "prot": "EXEC",
@@ -37,7 +37,7 @@
                 "active": true,
                 "task": "MACOS_ALL_CPU_USE",
                 "vars": [],
-                "reports": [ "RATE" ],
+                "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "%"
             },
