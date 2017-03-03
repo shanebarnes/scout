@@ -26,7 +26,7 @@ func ReportThread(t []target) {
                     default:
                         val = -1.
                 }
-                _stdscr.MovePrintf(k, 0, "%2d:     [%-64s] %.3f", k, impl.db[j].task, val)
+                _stdscr.MovePrintf(k, 0, "%2d:     [%-96s] %.3f", k, impl.db[j].task, val)
                 _stdscr.ClearToEOL()
                 k++
             }

@@ -66,22 +66,21 @@ func (t *TargetSsh) Watch() error {
 
     for {
         for i := range t.impl.task {
-            if session == nil {
-                if session, err = t.client.NewSession(); err == nil {
-                    buffer.Truncate(0)
-                    session.Stdout = &buffer
+            if session, err = t.client.NewSession(); err == nil {
+                buffer.Truncate(0)
+                session.Stdout = &buffer
+                if err = session.Run(t.impl.task[i].Cmd); err == nil {
+                    value := strings.Trim(buffer.String(), " \r\n")
+                    select {
+                        case *t.impl.ch <- strconv.Itoa(i):
+                        default:
+                    }
+                    select {
+                        case *t.impl.ch <- value:
+                        default:
+                    }
                 }
-            } else if err = session.Run(t.impl.task[i].Cmd); err == nil {
-                value := strings.Trim(buffer.String(), " \r\n")
-                select {
-                    case *t.impl.ch <- strconv.Itoa(i):
-                    default:
-                }
-                select {
-                    case *t.impl.ch <- value:
-                    default:
-                }
-            } else {
+
                 session.Close()
                 session = nil
             }
