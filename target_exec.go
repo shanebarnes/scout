@@ -64,7 +64,3 @@ func (t *TargetExec) Report() (*database, error) {
 func (t *TargetExec) GetImpl() *TargetImpl {
     return &t.impl
 }
-
-func (t *TargetExec) IsLost() bool {
-    return true
-}

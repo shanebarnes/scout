@@ -21,7 +21,6 @@ type target interface {
     Watch() error
     Report() (*database, error)
     GetImpl() *TargetImpl
-    IsLost() bool
 }
 
 func NewImpl(t *TargetImpl, conf TargetEntry, tasks TaskArr) error {
