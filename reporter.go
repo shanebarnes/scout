@@ -9,7 +9,7 @@ func ReportThread(t []target) {
             if impl.conf.Target.Prot == "EXEC" {
                 addr = "127.0.0.1"
             }
-            _stdscr.MovePrintf(k, 0, "%2d: Target Name: %s, Addr: %s, Sys: %s\n", k, impl.conf.Target.Name, addr, impl.conf.Target.Sys)
+            _stdscr.MovePrintf(k, 0, "%2d: Target Name: %s, Addr: %s, Sys: %s\n", i, impl.conf.Target.Name, addr, impl.conf.Target.Sys)
             _stdscr.ClearToEOL()
             k++
             for range impl.task {
@@ -26,7 +26,7 @@ func ReportThread(t []target) {
                     default:
                         val = -1.
                 }
-                _stdscr.MovePrintf(k, 0, "%2d:     [%-96s] %.3f", k, impl.db[j].task, val)
+                _stdscr.MovePrintf(k, 0, "    %4d: [%-96s] %.3f", impl.db[j].N, impl.db[j].task, val)
                 _stdscr.ClearToEOL()
                 k++
             }
