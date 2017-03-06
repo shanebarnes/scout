@@ -1,19 +1,16 @@
 package main
 
 import (
-    //"bytes"
     "encoding/json"
     "errors"
     "flag"
     "fmt"
-    //"golang.org/x/crypto/ssh"
     "log"
     "os"
     "os/signal"
     "strings"
     "syscall"
     "sync"
-    //"time"
 
     gc "github.com/rthornton128/goncurses"
 )
@@ -60,7 +57,6 @@ func main() {
     targets := make([]target, len(arr))
     channels := make([]chan string, len(arr))
     var wg sync.WaitGroup
-    wg.Add(len(targets))
     for i := range arr {
         channels[i] = make(chan string, 10)
         if arr[i].Target.Prot == "SSH" {
@@ -76,9 +72,7 @@ func main() {
             test.impl.wait = &wg
             targets[i] = test
         }
-        go target.Find(targets[i])
     }
-    wg.Wait()
     wg.Add(len(targets))
     for i := range targets {
         go target.Watch(targets[i])
@@ -229,83 +223,6 @@ func parseExecution(execution *Execution1) (TaskArr, error) {
 
     return ret, err
 }
-
-//func findTargets(arr *TargetArr) []*ssh.Client {
-//    size := len(*arr)
-//    clients := make([]*ssh.Client, size)
-//    targets := make([]*TargetSsh, size)
-//    var wg sync.WaitGroup
-//    wg.Add(size)
-//
-//    for i := range *arr {
-//        targets[i] = new(TargetSsh)
-//        targets[i].impl.conf = (*arr)[i]
-//        targets[i].impl.wait = &wg
-//        go target.Find(targets[i])
-//    }
-//
-//    wg.Wait()
-//    for i := range targets {
-//        clients[i] = targets[i].client
-//        //select {
-//       //     /*case*/ clients[i] = <-channels[i]/*:*/
-//        //    default:
-//        //}
-//    }
-//
-//    return clients
-//}
-
-//func watchTargets(targets []*ssh.Client, tasks *TaskArr, reports *[]database) {
-//    var wg sync.WaitGroup
-//    channels := make([]chan string, len(targets))
-//
-//    wg.Add(len(targets))
-//    for i, target := range targets {
-//        channels[i] = make(chan string, 10)
-//        go observeTarget(target, (*tasks)[0].Cmd, &wg, &channels[i])
-//    }
-//    wg.Wait()
-//
-//    for i := range channels {
-//        value := <-channels[i]
-//        timeval := uint64(time.Now().UnixNano()) / uint64(time.Millisecond)
-//
-//        dp, _ := NewDataPoint(timeval, value)
-//        Evaluate(&dp, &(*reports)[i])
-//        //switch (*tasks)[0].Ret {
-//        //    case "bool":
-//        //    case "float64":
-//        //    case "int64":
-//        //    case "uint64":
-//        //    default:
-//        //        _stdscr.MovePrintf(10, 0, "Unknown return type: %s, %s", (*tasks)[0].Ret, value)
-//        //        _stdscr.Refresh()
-//        //}
-//    }
-//    reportTargets(reports)
-//}
-
-//func observeTarget(client *ssh.Client, cmd string, wg *sync.WaitGroup, ch *chan string) {
-//    defer wg.Done()
-//    session, err := client.NewSession()
-//    if err != nil {
-//        log.Fatal("Failed to create session: ", err)
-//    }
-//    defer session.Close()
-//
-//    var b bytes.Buffer
-//    session.Stdout = &b
-//    if err := session.Run(cmd); err != nil {
-//        log.Fatal("Failed to run: " + err.Error())
-//    }
-//
-//    val := strings.Trim(b.String(), " \n")
-//    select {
-//        case *ch <- val:
-//        default:
-//    }
-//}
 
 func reportTargets(reports *[]database) {
     var maxTicks int = 20
