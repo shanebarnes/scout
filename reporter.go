@@ -18,6 +18,7 @@ func ReportThread(t []target) {
             }
             for j := range impl.db {
                 val := 0.
+                prefix := ""
                 switch impl.task[j].Exec.Reports[0] {
                     case "RATE":
                         val = impl.db[j].rate
@@ -26,7 +27,8 @@ func ReportThread(t []target) {
                     default:
                         val = -1.
                 }
-                _stdscr.MovePrintf(k, 0, "    %4d: [%-96s] %.3f", impl.db[j].N, impl.db[j].task, val)
+                val, prefix = ToUnits(val, 10)
+                _stdscr.MovePrintf(k, 0, "    %4d: [%-96s] %.3f%s%s", impl.db[j].N, impl.db[j].task, val, prefix, impl.db[j].units)
                 _stdscr.ClearToEOL()
                 k++
             }
