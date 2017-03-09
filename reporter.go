@@ -28,7 +28,7 @@ func ReportThread(t []target) {
                         val = -1.
                 }
                 val, prefix = ToUnits(val, 10)
-                _stdscr.MovePrintf(k, 0, "    %4d: [%-96s] %.3f%s%s", impl.db[j].N, impl.db[j].task, val, prefix, impl.db[j].units)
+                _stdscr.MovePrintf(k, 0, "    %4d: [%-96s] %7.3f %s%s", impl.db[j].N, impl.db[j].task, val, prefix, impl.db[j].units)
                 _stdscr.ClearToEOL()
                 k++
             }
