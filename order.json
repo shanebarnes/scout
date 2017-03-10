@@ -1,10 +1,10 @@
 {
     "mission": "aws cluster network activity monitoring",
     "situation": {
-        "targets": [ "MAC1" ],
+        "targets": [ "LIN1", "MAC1" ],
         "definitions": {
             "LIN1": {
-                "name": "virtual box",
+                "name": "Virtual Box",
                 "addr": "192.168.1.83",
                 "cred": "FEDORA25",
                 "prot": "SSH",
@@ -41,9 +41,25 @@
                 "scale": 1,
                 "units": "%"
             },
+            "ALL2_CPU_USE": {
+                "active": true,
+                "task": "LINUX_ALL_CPU_USE",
+                "vars": [],
+                "reports": [ "RAW" ],
+                "scale": 1,
+                "units": "%"
+            },
             "ENP0S3_RX_RATE": {
                 "active": true,
                 "task": "LINUX_NET_RX_BYTES",
+                "vars": [ "enp0s3" ],
+                "reports": [ "RATE" ],
+                "scale": 8,
+                "units": "bps"
+            },
+            "ENP0S3_TX_RATE": {
+                "active": true,
+                "task": "LINUX_NET_TX_BYTES",
                 "vars": [ "enp0s3" ],
                 "reports": [ "RATE" ],
                 "scale": 8,
@@ -64,6 +80,22 @@
                 "reports": [ "RATE" ],
                 "scale": 8,
                 "units": "bps"
+            },
+            "LINUX_NET_RTT": {
+                "active": true,
+                "task": "LINUX_NET_RTT_MS",
+                "vars": [ "192.168.1.83" ],
+                "reports": [ "RAW" ],
+                "scale": 1,
+                "units": "ms"
+            },
+            "MACOS_NET_RTT": {
+                "active": true,
+                "task": "MACOS_NET_RTT_MS",
+                "vars": [ "localhost" ],
+                "reports": [ "RAW" ],
+                "scale": 1,
+                "units": "ms"
             }
         },
         "definitions": {
@@ -83,12 +115,20 @@
                 "type": "float64",
                 "task": "grep 'cpu#VAR1#' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
             },
+            "LINUX_NET_RTT_MS": {
+                "sys": "LINUX",
+                "desc": "net rtt ms",
+                "reqs": [ "ping" ],
+                "vars": [ "#VAR1#" ],
+                "type": "uint64",
+                "task": "ping -c 1 #VAR1# | awk -F '/' '/rtt/ {print $5;}'"
+            },
             "LINUX_NET_RX_BYTES": {
                 "sys": "LINUX",
                 "desc": "net rx bytes",
                 "reqs": [ "cat" ],
                 "vars": [ "#VAR1#" ],
-                "type": "uint64",
+                "type": "float64",
                 "task": "cat /sys/class/net/#VAR1#/statistics/rx_bytes"
             },
             "LINUX_NET_TX_BYTES": {
@@ -96,7 +136,7 @@
                 "desc": "net tx bytes",
                 "reqs": [ "cat" ],
                 "vars": [ "#VAR1#" ],
-                "type": "uint64",
+                "type": "float64",
                 "task": "cat /sys/class/net/#VAR1#/statistics/tx_bytes"
             },
             "MACOS_ALL_CPU_USE": {
@@ -106,6 +146,14 @@
                 "vars": [],
                 "type": "float64",
                 "task": "top -l 1 -n 0 | awk '/^CPU usage/ {print $3+$5;}'"
+            },
+            "MACOS_NET_RTT_MS": {
+                "sys": "MACOS",
+                "desc": "net rtt ms",
+                "reqs": [ "ping" ],
+                "vars": [ "#VAR1#" ],
+                "type": "uint64",
+                "task": "ping -c 1 #VAR1# | awk -F '/' '/round-trip/ {print $5;}'"
             },
             "MACOS_NET_RX_BYTES": {
                 "sys": "MACOS",
