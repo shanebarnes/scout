@@ -1,5 +1,9 @@
 package main
 
+import (
+    gc "github.com/rthornton128/goncurses"
+)
+
 func ReportThread(t []target) {
     for {
         k := 0
@@ -9,7 +13,9 @@ func ReportThread(t []target) {
             if impl.conf.Target.Prot == "EXEC" {
                 addr = "127.0.0.1"
             }
+            _stdscr.ColorOn(gc.C_CYAN)
             _stdscr.MovePrintf(k, 0, "%2d: Target Name: %s, Addr: %s, Sys: %s\n", i, impl.conf.Target.Name, addr, impl.conf.Target.Sys)
+            _stdscr.ColorOff(gc.C_CYAN)
             _stdscr.ClearToEOL()
             k++
             for range impl.task {
