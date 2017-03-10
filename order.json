@@ -5,14 +5,14 @@
         "definitions": {
             "LIN1": {
                 "name": "Virtual Box",
-                "addr": "192.168.1.83",
+                "addr": [ "192.168.1.83", "192.168.1.84" ],
                 "cred": "FEDORA25",
                 "prot": "SSH",
                 "sys": [ "LINUX" ]
             },
             "MAC1": {
                 "name": "MacBook Pro",
-                "addr": "",
+                "addr": [ "" ],
                 "cred": "EXEC",
                 "prot": "EXEC",
                 "sys": [ "MACOS" ]

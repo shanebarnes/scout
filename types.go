@@ -7,6 +7,14 @@ type Credentials struct {
 }
 type CredentialsMap map[string]Credentials
 
+type TargetGroup struct {
+    Name string `json:"name"`
+    Addr []string `json:"addr"`
+    Cred string `json:"cred"`
+    Prot string `json:"prot"`
+    Sys []string `json:"sys"`
+}
+
 type Target struct {
     Name string `json:"name"`
     Addr string `json:"addr"`
@@ -14,7 +22,7 @@ type Target struct {
     Prot string `json:"prot"`
     Sys []string `json:"sys"`
 }
-type TargetMap map[string]Target
+type TargetMap map[string]TargetGroup
 
 type TargetEntry struct {
     Target Target

@@ -15,7 +15,7 @@ import (
     gc "github.com/rthornton128/goncurses"
 )
 
-const _VERSION string = "0.1.0"
+const _VERSION string = "0.2.0"
 var _stdscr *gc.Window = nil
 
 func sigHandler(ch *chan os.Signal) {
@@ -137,27 +137,39 @@ func loadOrder() Order {
 }
 
 func parseSituation(situation *Situation) (TargetArr, error) {
-    size := len(situation.Targets)
+    size := 0
     ret := make(TargetArr, size)
     var err error = nil
     definitions := situation.Definitions
     credentials := situation.Credentials
 
-    for i, id := range situation.Targets {
+    for _, id := range situation.Targets {
         var exists bool
-        var target Target
-        if target, exists = definitions[id]; exists {
-            ret[i].Target = target
+        var group TargetGroup
+
+        if group, exists = definitions[id]; exists {
+            var cred Credentials
+            var entry TargetEntry
+
+            if cred, exists = credentials[group.Cred]; exists {
+                entry.Credentials = cred
+            } else {
+                err = errors.New("Target '" + id + "' credentials '" + group.Cred + "' not found")
+                break
+            }
+
+            // todo: check for duplicate addreses?
+            for _, addr := range group.Addr {
+                entry.Target.Name = group.Name
+                entry.Target.Addr = addr
+                entry.Target.Cred = group.Cred
+                entry.Target.Prot = group.Prot
+                entry.Target.Sys = group.Sys
+                ret = append(ret, entry)
+                size = size + 1
+            }
         } else {
             err = errors.New("Target '" + id + "' is not found in definitions")
-            break
-        }
-
-        var cred Credentials
-        if cred, exists = credentials[target.Cred]; exists {
-            ret[i].Credentials = cred
-        } else {
-            err = errors.New("Target '" + id + "' credentials '" + target.Cred + "' not found")
             break
         }
     }
