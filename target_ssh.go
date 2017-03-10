@@ -31,6 +31,7 @@ func (t *TargetSsh) Find() error {
             Auth: []ssh.AuthMethod {
                 ssh.Password(t.impl.conf.Credentials.Pass),
             },
+// This timeout will block the update thread
             Timeout: 10000 * time.Millisecond,
         }
     } else if len(t.impl.conf.Credentials.Cert) > 0 {
@@ -44,6 +45,7 @@ func (t *TargetSsh) Find() error {
             Auth: []ssh.AuthMethod {
                 ssh.PublicKeys(signer),
             },
+// This timeout will block the update thread
             Timeout: 10000 * time.Millisecond,
         }
     }
