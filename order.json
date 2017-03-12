@@ -5,7 +5,7 @@
         "definitions": {
             "LIN1": {
                 "name": "Virtual Box",
-                "addr": [ "192.168.1.83", "192.168.1.84" ],
+                "addr": [ "192.168.1.83" ],
                 "cred": "FEDORA25",
                 "prot": "SSH",
                 "sys": [ "LINUX" ]
@@ -36,7 +36,9 @@
             "ALL_CPU_USE": {
                 "active": true,
                 "task": "MACOS_ALL_CPU_USE",
-                "vars": [],
+                "vars": [
+                    []
+                ],
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "%"
@@ -44,7 +46,9 @@
             "ALL2_CPU_USE": {
                 "active": true,
                 "task": "LINUX_ALL_CPU_USE",
-                "vars": [],
+                "vars": [
+                    []
+                ],
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "%"
@@ -52,7 +56,9 @@
             "ENP0S3_RX_RATE": {
                 "active": true,
                 "task": "LINUX_NET_RX_BYTES",
-                "vars": [ "enp0s3" ],
+                "vars": [
+                    [ "enp0s3" ]
+                ],
                 "reports": [ "RATE" ],
                 "scale": 8,
                 "units": "bps"
@@ -60,7 +66,9 @@
             "ENP0S3_TX_RATE": {
                 "active": true,
                 "task": "LINUX_NET_TX_BYTES",
-                "vars": [ "enp0s3" ],
+                "vars": [
+                    [ "enp0s3" ]
+                ],
                 "reports": [ "RATE" ],
                 "scale": 8,
                 "units": "bps"
@@ -68,7 +76,10 @@
             "EN0_RX_RATE": {
                 "active": true,
                 "task": "MACOS_NET_RX_BYTES",
-                "vars": [ "en0" ],
+                "vars": [
+                    [ "en0" ],
+                    [ "lo0" ]
+                ],
                 "reports": [ "RATE" ],
                 "scale": 8,
                 "units": "bps"
@@ -76,7 +87,10 @@
             "EN0_TX_RATE": {
                 "active": true,
                 "task": "MACOS_NET_TX_BYTES",
-                "vars": [ "en0" ],
+                "vars": [
+                    [ "en0" ],
+                    [ "lo0" ]
+                ],
                 "reports": [ "RATE" ],
                 "scale": 8,
                 "units": "bps"
@@ -84,7 +98,9 @@
             "LINUX_NET_RTT": {
                 "active": true,
                 "task": "LINUX_NET_RTT_MS",
-                "vars": [ "192.168.1.83" ],
+                "vars": [
+                    [ "192.168.1.83" ]
+                ],
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "ms"
@@ -92,7 +108,9 @@
             "MACOS_NET_RTT": {
                 "active": true,
                 "task": "MACOS_NET_RTT_MS",
-                "vars": [ "localhost" ],
+                "vars": [
+                    [ "google.com" ]
+                ],
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "ms"

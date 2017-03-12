@@ -53,7 +53,7 @@ type TaskArr []TaskEntry
 type Execution struct {
     Active bool `json:"active"`
     Task string `json:"task"`
-    Vars []string `json:"vars"`
+    Vars [][]string `json:"vars"`
     Reports []string `json:"reports"`
     Scale float64 `json:"scale"`
     Units string `json:"units"`

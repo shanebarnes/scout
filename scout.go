@@ -182,44 +182,46 @@ func parseSituation(situation *Situation) (TargetArr, error) {
 }
 
 func parseExecution(execution *Execution1) (TaskArr, error) {
-    size := len(execution.Tasks)
-    ret := make(TaskArr, size)
+    size := 0
+    ret := make(TaskArr, 0)
     var err error = nil
     tasks := execution.Tasks
     definitions := execution.Definitions
 
-    var i int = 0
     for _, task := range tasks {
         var def Task
         var exists bool
         if def, exists = definitions[task.Task]; exists {
-            if len(task.Vars) == len(def.Vars) {
-                cmd := def.Task
-                for j, param := range task.Vars {
-                    cmd = strings.Replace(cmd, def.Vars[j], param, 1)
+            for _, vars := range task.Vars {
+                if len(vars) == len(def.Vars) {
+                    cmd := def.Task
+                    for k, param := range vars {
+                        cmd = strings.Replace(cmd, def.Vars[k], param, 1)
+                    }
+                    var entry TaskEntry
+                    entry.Exec = task
+                    entry.Sys = def.Sys
+                    entry.Cmd = cmd
+                    entry.Ret = def.Type
+                    entry.Scale = task.Scale
+                    entry.Units = task.Units
+                    ret = append(ret, entry)
+                    size = size + 1
+                } else {
+                    err = errors.New("Task '" + task.Task + "' vars do not match definitions")
+                    break
                 }
-                ret[i].Exec = task
-                ret[i].Sys = def.Sys
-                ret[i].Cmd = cmd
-                ret[i].Ret = def.Type
-                ret[i].Scale = task.Scale
-                ret[i].Units = task.Units
-            } else {
-                err = errors.New("Task '" + task.Task + "' vars do not match definitions")
-                break
             }
         } else {
             err = errors.New("Task '" + task.Task + "' is not found in definitions")
             break
         }
-
-        i++
     }
 
     if size == 0 && err == nil {
         err = errors.New("No tasks found")
     } else {
-        i = 0
+        i := 0
         for _, task := range ret {
             if task.Exec.Active {
                 ret[i] = task
