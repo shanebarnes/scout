@@ -8,6 +8,7 @@ import (
     "log"
     "os"
     "os/signal"
+    "sort"
     "strings"
     "syscall"
     "sync"
@@ -233,6 +234,8 @@ func parseExecution(execution *Execution1) (TaskArr, error) {
             ret = ret[:i]
         }
     }
+
+    sort.Sort(ret)
 
     return ret, err
 }

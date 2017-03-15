@@ -36,6 +36,7 @@
             "LINUX_CPU_USE": {
                 "active": true,
                 "sys": "LINUX",
+                "desc": [ "total cpu use" ],
                 "task": "LINUX_GREP",
                 "vars": [
                     [ " " ]
@@ -47,6 +48,7 @@
             "LINUX_NET_BYTES": {
                 "active": true,
                 "sys": "LINUX",
+                "desc": [ "network enp0s3 rx bytes", "network enp0s3 tx bytes" ],
                 "task": "UNIX_CAT",
                 "vars": [
                     [ "/sys/class/net/", "enp0s3", "/statistics/", "rx_bytes" ],
@@ -59,6 +61,7 @@
             "LINUX_NET_RTT_MS": {
                 "active": true,
                 "sys": "LINUX",
+                "desc": [ "average ping in ms" ],
                 "task": "UNIX_PING",
                 "vars": [
                     [ "192.168.1.254", "rtt" ]
@@ -67,9 +70,22 @@
                 "scale": 1,
                 "units": "ms"
             },
+            "LINUX_UPTIME_SEC": {
+                "active": true,
+                "sys": "LINUX",
+                "desc": [ "uptime in seconds" ],
+                "task": "UNIX_CAT",
+                "vars": [
+                    [ "/proc/uptime", " | awk '{print $1}'", "", "" ]
+                ],
+                "reports": [ "RAW" ],
+                "scale": 1,
+                "units": "sec"
+            },
             "MACOS_CPU_USE": {
                 "active": true,
                 "sys": "MACOS",
+                "desc": [ "total cpu use" ],
                 "task": "MACOS_TOP",
                 "vars": [
                     []
@@ -81,6 +97,7 @@
             "MACOS_NET_BYTES": {
                 "active": true,
                 "sys": "MACOS",
+                "desc": [ "network en0 rx bytes", "network en0 tx bytes" ],
                 "task": "MACOS_NETSTAT",
                 "vars": [
                     [ "en0", "7" ],
@@ -93,6 +110,7 @@
             "MACOS_NET_RTT_MS": {
                 "active": true,
                 "sys": "MACOS",
+                "desc": [ "average ping in ms" ],
                 "task": "UNIX_PING",
                 "vars": [
                     [ "google.com", "round-trip" ]
@@ -100,39 +118,52 @@
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "ms"
+            },
+            "MACOS_UPTIME_SEC": {
+                "active": true,
+                "sys": "MACOS",
+                "desc": [ "uptime in seconds" ],
+                "task": "MACOS_UPTIME_SEC",
+                "vars": [
+                     []
+                ],
+                "reports": [ "RAW" ],
+                "scale": 1,
+                "units": "sec"
             }
         },
         "definitions": {
             "LINUX_GREP": {
-                "desc": "core cpu use",
                 "reqs": [ "awk", "grep" ],
                 "vars": [ "#VAR1#" ],
                 "type": "float64",
                 "task": "grep 'cpu#VAR1#' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
             },
             "MACOS_NETSTAT": {
-                "desc": "net rx bytes",
                 "reqs": [ "awk", "netstat" ],
                 "vars": [ "#VAR1#", "#VAR2#" ],
                 "type": "uint64",
                 "task": "netstat -ibn -I #VAR1# | awk '//{i++}i==2{print $#VAR2#;exit}'"
             },
             "MACOS_TOP": {
-                "desc": "all cpu use",
                 "reqs": [ "awk", "top" ],
                 "vars": [],
                 "type": "float64",
                 "task": "top -l 1 -n 0 | awk '/^CPU usage/ {print $3+$5;}'"
             },
+            "MACOS_UPTIME_SEC": {
+                "reqs": [ "awk", "date", "sysctl" ],
+                "vars": [],
+                "type": "float64",
+                "task": "t1=$(date +%s); t0=$(sysctl -a | awk '/kern.boottime/ {print substr($5, 1, length($5)-1)}'); diff=$(($t1-$t0)); echo $diff"
+            },
             "UNIX_CAT": {
-                "desc": "cat",
                 "reqs": [ "cat" ],
                 "vars": [ "#VAR1#", "#VAR2#", "#VAR3#", "#VAR4#" ],
                 "type": "float64",
                 "task": "cat #VAR1##VAR2##VAR3##VAR4#"
             },
             "UNIX_PING": {
-                "desc": "average ping in ms",
                 "reqs": [ "ping" ],
                 "vars": [ "#VAR1#", "#VAR2#" ],
                 "type": "uint64",

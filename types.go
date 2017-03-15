@@ -31,7 +31,6 @@ type TargetEntry struct {
 type TargetArr []TargetEntry
 // define task as operation instead
 type Task struct {
-    Desc string `json:"desc"`
     Reqs []string `json:"reqs"`
     Vars []string `json:"vars"`
     Type string `json:"type"`
@@ -51,6 +50,7 @@ type TaskArr []TaskEntry
 type Execution struct {
     Active bool `json:"active"`
     Sys string `json:"sys"`
+    Desc []string `json:"desc"`
     Task string `json:"task"`
     Vars [][]string `json:"vars"`
     Reports []string `json:"reports"`
@@ -97,4 +97,16 @@ type Report struct {
     Timestamp uint64
     Value     uint64
     Rate      uint64
+}
+
+func (slice TaskArr) Len() int {
+    return len(slice)
+}
+
+func (slice TaskArr) Less(i, j int) bool {
+    return slice[i].Exec.Desc[0] < slice[j].Exec.Desc[0];
+}
+
+func (slice TaskArr) Swap(i, j int) {
+    slice[i], slice[j] = slice[j], slice[i]
 }
