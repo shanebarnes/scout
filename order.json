@@ -8,14 +8,14 @@
                 "addr": [ "192.168.1.83" ],
                 "cred": "FEDORA25",
                 "prot": "SSH",
-                "sys": [ "LINUX" ]
+                "sys": [ "LINUX", "UNIX" ]
             },
             "MAC1": {
                 "name": "MacBook Pro",
                 "addr": [ "" ],
                 "cred": "EXEC",
                 "prot": "EXEC",
-                "sys": [ "MACOS" ]
+                "sys": [ "MACOS", "UNIX" ]
             }
         },
         "credentials": {
@@ -33,83 +33,69 @@
     },
     "execution": {
         "tasks": {
-            "ALL_CPU_USE": {
+            "LINUX_CPU_USE": {
                 "active": true,
-                "task": "MACOS_ALL_CPU_USE",
+                "sys": "LINUX",
+                "task": "LINUX_GREP",
                 "vars": [
-                    []
+                    [ " " ]
                 ],
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "%"
             },
-            "ALL2_CPU_USE": {
+            "LINUX_NET_BYTES": {
                 "active": true,
-                "task": "LINUX_ALL_CPU_USE",
+                "sys": "LINUX",
+                "task": "UNIX_CAT",
                 "vars": [
-                    []
+                    [ "/sys/class/net/", "enp0s3", "/statistics/", "rx_bytes" ],
+                    [ "/sys/class/net/", "enp0s3", "/statistics/", "tx_bytes" ]
                 ],
-                "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "%"
-            },
-            "ENP0S3_RX_RATE": {
-                "active": true,
-                "task": "LINUX_NET_RX_BYTES",
-                "vars": [
-                    [ "enp0s3" ]
-                ],
-                "reports": [ "RATE" ],
+                "reports": [ "RAW", "RATE" ],
                 "scale": 8,
                 "units": "bps"
             },
-            "ENP0S3_TX_RATE": {
+            "LINUX_NET_RTT_MS": {
                 "active": true,
-                "task": "LINUX_NET_TX_BYTES",
+                "sys": "LINUX",
+                "task": "UNIX_PING",
                 "vars": [
-                    [ "enp0s3" ]
-                ],
-                "reports": [ "RATE" ],
-                "scale": 8,
-                "units": "bps"
-            },
-            "EN0_RX_RATE": {
-                "active": true,
-                "task": "MACOS_NET_RX_BYTES",
-                "vars": [
-                    [ "en0" ],
-                    [ "lo0" ]
-                ],
-                "reports": [ "RATE" ],
-                "scale": 8,
-                "units": "bps"
-            },
-            "EN0_TX_RATE": {
-                "active": true,
-                "task": "MACOS_NET_TX_BYTES",
-                "vars": [
-                    [ "en0" ],
-                    [ "lo0" ]
-                ],
-                "reports": [ "RATE" ],
-                "scale": 8,
-                "units": "bps"
-            },
-            "LINUX_NET_RTT": {
-                "active": true,
-                "task": "LINUX_NET_RTT_MS",
-                "vars": [
-                    [ "192.168.1.83" ]
+                    [ "192.168.1.254", "rtt" ]
                 ],
                 "reports": [ "RAW" ],
                 "scale": 1,
                 "units": "ms"
             },
-            "MACOS_NET_RTT": {
+            "MACOS_CPU_USE": {
                 "active": true,
-                "task": "MACOS_NET_RTT_MS",
+                "sys": "MACOS",
+                "task": "MACOS_TOP",
                 "vars": [
-                    [ "google.com" ]
+                    []
+                ],
+                "reports": [ "RAW" ],
+                "scale": 1,
+                "units": "%"
+            },
+            "MACOS_NET_BYTES": {
+                "active": true,
+                "sys": "MACOS",
+                "task": "MACOS_NETSTAT",
+                "vars": [
+                    [ "en0", "7" ],
+                    [ "en0", "10" ]
+                ],
+                "reports": [ "RAW", "RATE" ],
+                "scale": 8,
+                "units": "bps"
+            },
+            "MACOS_NET_RTT_MS": {
+                "active": true,
+                "sys": "MACOS",
+                "task": "UNIX_PING",
+                "vars": [
+                    [ "google.com", "round-trip" ]
                 ],
                 "reports": [ "RAW" ],
                 "scale": 1,
@@ -117,77 +103,40 @@
             }
         },
         "definitions": {
-            "LINUX_ALL_CPU_USE": {
-                "sys": "LINUX",
-                "desc": "all cpu use",
-                "reqs": [ "awk", "grep" ],
-                "vars": [],
-                "type": "float64",
-                "task": "grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
-            },
-            "LINUX_CORE_CPU_USE": {
-                "sys": "LINUX",
+            "LINUX_GREP": {
                 "desc": "core cpu use",
                 "reqs": [ "awk", "grep" ],
                 "vars": [ "#VAR1#" ],
                 "type": "float64",
                 "task": "grep 'cpu#VAR1#' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
             },
-            "LINUX_NET_RTT_MS": {
-                "sys": "LINUX",
-                "desc": "net rtt ms",
-                "reqs": [ "ping" ],
-                "vars": [ "#VAR1#" ],
-                "type": "uint64",
-                "task": "ping -c 1 #VAR1# | awk -F '/' '/rtt/ {print $5;}'"
-            },
-            "LINUX_NET_RX_BYTES": {
-                "sys": "LINUX",
+            "MACOS_NETSTAT": {
                 "desc": "net rx bytes",
-                "reqs": [ "cat" ],
-                "vars": [ "#VAR1#" ],
-                "type": "float64",
-                "task": "cat /sys/class/net/#VAR1#/statistics/rx_bytes"
+                "reqs": [ "awk", "netstat" ],
+                "vars": [ "#VAR1#", "#VAR2#" ],
+                "type": "uint64",
+                "task": "netstat -ibn -I #VAR1# | awk '//{i++}i==2{print $#VAR2#;exit}'"
             },
-            "LINUX_NET_TX_BYTES": {
-                "sys": "LINUX",
-                "desc": "net tx bytes",
-                "reqs": [ "cat" ],
-                "vars": [ "#VAR1#" ],
-                "type": "float64",
-                "task": "cat /sys/class/net/#VAR1#/statistics/tx_bytes"
-            },
-            "MACOS_ALL_CPU_USE": {
-                "sys": "MACOS",
+            "MACOS_TOP": {
                 "desc": "all cpu use",
                 "reqs": [ "awk", "top" ],
                 "vars": [],
                 "type": "float64",
                 "task": "top -l 1 -n 0 | awk '/^CPU usage/ {print $3+$5;}'"
             },
-            "MACOS_NET_RTT_MS": {
-                "sys": "MACOS",
-                "desc": "net rtt ms",
+            "UNIX_CAT": {
+                "desc": "cat",
+                "reqs": [ "cat" ],
+                "vars": [ "#VAR1#", "#VAR2#", "#VAR3#", "#VAR4#" ],
+                "type": "float64",
+                "task": "cat #VAR1##VAR2##VAR3##VAR4#"
+            },
+            "UNIX_PING": {
+                "desc": "average ping in ms",
                 "reqs": [ "ping" ],
-                "vars": [ "#VAR1#" ],
+                "vars": [ "#VAR1#", "#VAR2#" ],
                 "type": "uint64",
-                "task": "ping -c 1 #VAR1# | awk -F '/' '/round-trip/ {print $5;}'"
-            },
-            "MACOS_NET_RX_BYTES": {
-                "sys": "MACOS",
-                "desc": "net rx bytes",
-                "reqs": [ "awk", "netstat" ],
-                "vars": [ "#VAR1#" ],
-                "type": "uint64",
-                "task": "netstat -ibn -I #VAR1# | awk '//{i++}i==2{print $7;exit}'"
-            },
-            "MACOS_NET_TX_BYTES": {
-                "sys": "MACOS",
-                "desc": "net tx bytes",
-                "reqs": [ "awk", "netstat" ],
-                "vars": [ "#VAR1#" ],
-                "type": "uint64",
-                "task": "netstat -ibn -I #VAR1# | awk '//{i++}i==2{print $10;exit}'"
+                "task": "ping -c 1 #VAR1# | awk -F '/' '/#VAR2#/ {print $5;}'"
             }
         }
     },

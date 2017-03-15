@@ -200,7 +200,6 @@ func parseExecution(execution *Execution1) (TaskArr, error) {
                     }
                     var entry TaskEntry
                     entry.Exec = task
-                    entry.Sys = def.Sys
                     entry.Cmd = cmd
                     entry.Ret = def.Type
                     entry.Scale = task.Scale

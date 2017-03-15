@@ -31,7 +31,6 @@ type TargetEntry struct {
 type TargetArr []TargetEntry
 // define task as operation instead
 type Task struct {
-    Sys string `json:"sys"`
     Desc string `json:"desc"`
     Reqs []string `json:"reqs"`
     Vars []string `json:"vars"`
@@ -42,7 +41,6 @@ type TaskMap map[string]Task
 
 type TaskEntry struct {
     Exec Execution
-    Sys string
     Cmd string
     Ret string
     Scale float64
@@ -52,6 +50,7 @@ type TaskArr []TaskEntry
 
 type Execution struct {
     Active bool `json:"active"`
+    Sys string `json:"sys"`
     Task string `json:"task"`
     Vars [][]string `json:"vars"`
     Reports []string `json:"reports"`

@@ -31,7 +31,7 @@ func NewImpl(t *TargetImpl, conf TargetEntry, tasks TaskArr) error {
     // Todo: move to scout parsing
     for i := range tasks {
         for j := range conf.Target.Sys {
-            if conf.Target.Sys[j] == tasks[i].Sys {
+            if conf.Target.Sys[j] == tasks[i].Exec.Sys {
                 t.task = append(t.task, tasks[i])
             }
         }
