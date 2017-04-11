@@ -193,7 +193,7 @@ func parseExecution(execution *Execution1) (TaskArr, error) {
         var def Task
         var exists bool
         if def, exists = definitions[task.Task]; exists {
-            for _, vars := range task.Vars {
+            for j, vars := range task.Vars {
                 if len(vars) == len(def.Vars) {
                     cmd := def.Task
                     for k, param := range vars {
@@ -202,9 +202,15 @@ func parseExecution(execution *Execution1) (TaskArr, error) {
                     var entry TaskEntry
                     entry.Exec = task
                     entry.Cmd = cmd
+                    entry.Desc = task.Desc[j]
                     entry.Ret = def.Type
                     entry.Scale = task.Scale
-                    entry.Units = task.Units
+                    if len(task.Units) == len(task.Reports) {
+                        entry.Units = task.Units
+                    } else {
+                        err = errors.New("Task '" + task.Task + "' reports and units lengths do not match")
+                        break
+                    }
                     ret = append(ret, entry)
                     size = size + 1
                 } else {

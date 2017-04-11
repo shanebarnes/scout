@@ -11,8 +11,10 @@ type datapoint struct {
 type database struct {
     N uint64
     dp0, dpN datapoint
-    max, min, rate, scale float64
-    target, task, units string
+    diff, max, min, rate float64
+    scale []float64
+    target, task string
+    units []string
 }
 
 func IsNum(s string) bool {
@@ -20,13 +22,14 @@ func IsNum(s string) bool {
     return err == nil
 }
 
-func NewDataBase(target, task string, scale float64, units string) database {
+func NewDataBase(target, task string, scale []float64, units []string) database {
     return database{
         N: 0,
         dp0: datapoint{x: 0, y: 0},
         dpN: datapoint{x: 0, y: 0},
         max: 0,
         min: 0,
+        diff: 0,
         rate: 0,
         scale: scale,
         target: target,
@@ -46,24 +49,26 @@ func Evaluate(dp *datapoint, db *database) {
     db.N++
     if db.N == 1 {
         db.dp0 = *dp
+        db.diff = dp.y
         db.max = dp.y
         db.min = dp.y
         db.rate = 0
     } else {
+        db.diff = dp.y - db.dpN.y
         if dp.y > db.max { db.max = dp.y }
         if dp.y < db.min { db.min = dp.y }
-        db.rate = CalcRate(db.dpN, *dp, db.scale)
+        db.rate = CalcRate(db.dpN, *dp)
     }
     db.dpN = *dp
 }
 
-func CalcRate(dp1, dp2 datapoint, scale float64) float64 {
+func CalcRate(dp1, dp2 datapoint) float64 {
     var rv float64 = 0.
 
     if dp2.x == dp1.x {
 
     } else {
-        rv = 1000. * scale * (dp2.y - dp1.y) / (dp2.x - dp1.x)
+        rv = 1000. * (dp2.y - dp1.y) / (dp2.x - dp1.x)
     }
 
     return rv

@@ -1,6 +1,8 @@
 package main
 
 import (
+    "strings"
+
     gc "github.com/rthornton128/goncurses"
 )
 
@@ -27,16 +29,19 @@ func ReportThread(t []target) {
                 for k := range impl.task[j].Exec.Reports {
                     val := 0.
                     prefix := ""
-                    switch impl.task[j].Exec.Reports[k] {
+                    switch strings.ToUpper(impl.task[j].Exec.Reports[k]) {
+                        case "DIFF":
+                            val = impl.db[j].diff
                         case "RATE":
                             val = impl.db[j].rate
                         case "RAW":
                             val = impl.db[j].dpN.y
                         default:
-                            val = -1.
+                            val = 0.
                     }
+                    val = val * impl.db[j].scale[k]
                     val, prefix = ToUnits(val, 10)
-                    _stdscr.MovePrintf(m, 0, "    %4d: [%-32s] %7.3f %s%s", impl.db[j].N, impl.task[j].Exec.Desc[k], val, prefix, impl.db[j].units)
+                    _stdscr.MovePrintf(m, 0, "    %4d: %-32s [%-4s] %7.3f %s%s", impl.db[j].N, impl.task[j].Desc, strings.ToLower(impl.task[j].Exec.Reports[k]), val, prefix, impl.db[j].units[k])
                     _stdscr.ClearToEOL()
                     m++
                 }

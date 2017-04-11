@@ -41,9 +41,10 @@ type TaskMap map[string]Task
 type TaskEntry struct {
     Exec Execution
     Cmd string
+    Desc string
     Ret string
-    Scale float64
-    Units string
+    Scale []float64
+    Units []string
 }
 type TaskArr []TaskEntry
 
@@ -54,8 +55,8 @@ type Execution struct {
     Task string `json:"task"`
     Vars [][]string `json:"vars"`
     Reports []string `json:"reports"`
-    Scale float64 `json:"scale"`
-    Units string `json:"units"`
+    Scale []float64 `json:"scale"`
+    Units []string `json:"units"`
 }
 type ExecutionMap map[string]Execution
 

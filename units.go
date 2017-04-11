@@ -62,7 +62,7 @@ func GetUnitPrefix(prefix float64) string {
         case DEC_T:
             ret = "T"
         case DEC_P:
-            return "P"
+            ret = "P"
         case DEC_E:
             ret = "E"
     }

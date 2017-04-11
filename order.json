@@ -1,7 +1,7 @@
 {
     "mission": "aws cluster network activity monitoring",
     "situation": {
-        "targets": [ "LIN1", "MAC1" ],
+        "targets": [ "MAC1" ],
         "definitions": {
             "LIN1": {
                 "name": "Virtual Box",
@@ -42,8 +42,8 @@
                     [ " " ]
                 ],
                 "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "%"
+                "scale": [ 1 ],
+                "units": [ "%" ]
             },
             "LINUX_NET_BYTES": {
                 "active": true,
@@ -55,8 +55,8 @@
                     [ "/sys/class/net/", "enp0s3", "/statistics/", "tx_bytes" ]
                 ],
                 "reports": [ "RAW", "RATE" ],
-                "scale": 8,
-                "units": "bps"
+                "scale": [ 1, 8 ],
+                "units": [ "B", "bps" ]
             },
             "LINUX_NET_RTT_MS": {
                 "active": true,
@@ -67,8 +67,8 @@
                     [ "192.168.1.254", "rtt" ]
                 ],
                 "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "ms"
+                "scale": [ 1 ],
+                "units": [ "ms" ]
             },
             "LINUX_UPTIME_SEC": {
                 "active": true,
@@ -79,8 +79,8 @@
                     [ "/proc/uptime", " | awk '{print $1}'", "", "" ]
                 ],
                 "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "sec"
+                "scale": [ 1 ],
+                "units": [ "sec" ]
             },
             "MACOS_CPU_USE": {
                 "active": true,
@@ -91,8 +91,8 @@
                     []
                 ],
                 "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "%"
+                "scale": [ 1 ],
+                "units": [ "%" ]
             },
             "MACOS_NET_BYTES": {
                 "active": true,
@@ -103,9 +103,9 @@
                     [ "en0", "7" ],
                     [ "en0", "10" ]
                 ],
-                "reports": [ "RAW", "RATE" ],
-                "scale": 8,
-                "units": "bps"
+                "reports": [ "DIFF", "RAW", "RATE" ],
+                "scale": [ 1, 1, 8 ],
+                "units": [ "B", "B", "bps" ]
             },
             "MACOS_NET_RTT_MS": {
                 "active": true,
@@ -116,8 +116,8 @@
                     [ "google.com", "round-trip" ]
                 ],
                 "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "ms"
+                "scale": [ 1 ],
+                "units": [ "ms" ]
             },
             "MACOS_UPTIME_SEC": {
                 "active": true,
@@ -128,8 +128,8 @@
                      []
                 ],
                 "reports": [ "RAW" ],
-                "scale": 1,
-                "units": "sec"
+                "scale": [ 1 ],
+                "units": [ "sec" ]
             }
         },
         "definitions": {
