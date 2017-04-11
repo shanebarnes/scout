@@ -16,7 +16,7 @@ import (
     gc "github.com/rthornton128/goncurses"
 )
 
-const _VERSION string = "0.2.0"
+const _VERSION string = "0.3.0"
 var _stdscr *gc.Window = nil
 
 func sigHandler(ch *chan os.Signal) {
@@ -41,7 +41,17 @@ func main() {
 
     initLog()
     initGui()
-    order := loadOrder()
+
+    orderFile := flag.String("order", "order.json", "file containing scouting operations order")
+    /*reportFile := */flag.String("report", "report.csv", "file containing scouting report")
+    flag.Usage = func() {
+        fmt.Fprintf(os.Stderr, "version %s\n", _VERSION)
+        fmt.Fprintln(os.Stderr, "usage:")
+        flag.PrintDefaults()
+    }
+    flag.Parse()
+
+    order := loadOrder(orderFile)
 
     arr, err := parseSituation(&order.Situation)
     if (err != nil ) {
@@ -114,26 +124,16 @@ func getPrettyJson(v interface{}) string {
     return string(buffer)
 }
 
-func loadOrder() Order {
-    option := flag.String("order", "order.json", "file containing scouting operations order")
-    flag.Usage = func() {
-        fmt.Fprintf(os.Stderr, "version %s\n", _VERSION)
-        fmt.Fprintln(os.Stderr, "usage:")
-        flag.PrintDefaults()
-    }
-    flag.Parse()
+func loadOrder(fileName *string) Order {
 
-    file, _ := os.Open(*option)
+    file, _ := os.Open(*fileName)
     decoder := json.NewDecoder(file)
     order := Order{}
     err := decoder.Decode(&order)
     if err != nil {
         fmt.Println("error: ", err)
-    } else {
-        //log.Println(getPrettyJson(order))
     }
-    //log.Println("Targets:", len(order.Situation.Targets))
-    //log.Println("Tasks  :", len(order.Execution.Tasks))
+
     return order
 }
 
