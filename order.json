@@ -176,11 +176,12 @@
         "frequency": "500",
         "duration": "0",
         "reports" : {
-            "AVG": { "op": "x / t" },
-            "MIN": { "op": "x < x0" },
-            "MAX": { "op": "x > x0" },
-            "RATE": { "op": "(x - x0) / (t - t0)" },
-            "RAW": { "op": "x" }
+            "AVG": { "op": "sum(y) / size(y)" },
+            "DIFF": { "op": "y1 - y0" },
+            "MIN": { "op": "y1 < y0" },
+            "MAX": { "op": "y1 > y0" },
+            "RATE": { "op": "(y1 - y0) / (x1 - x0)" },
+            "RAW": { "op": "y" }
         }
     }
 }
