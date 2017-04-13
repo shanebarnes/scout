@@ -31,15 +31,20 @@ func (t TargetExec) Watch() error {
 
     for {
         for i := range t.impl.task {
+            start := time.Now()
             if buffer, err1 := exec.Command("bash", "-c", t.impl.task[i].Cmd).Output(); err1 == nil {
+                elapsed := time.Since(start)
                 value := strings.Trim(string(buffer[:]), " \r\n")
-
                 select {
                     case *t.impl.ch <- strconv.Itoa(i):
                     default:
                 }
                 select {
                     case *t.impl.ch <- value:
+                    default:
+                }
+                select {
+                    case *t.impl.ch <- elapsed.String():
                     default:
                 }
                 /*select {

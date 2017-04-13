@@ -51,7 +51,7 @@ func RecvFrom(ch *chan string) (string, error) {
 
     select {
         case val = <-*ch:
-        case <-time.After(time.Millisecond * 10):
+        case <-time.After(time.Millisecond * 0):
             err = errors.New("Recv channel timeout")
     }
 
@@ -62,17 +62,18 @@ func ReportImpl(t *TargetImpl) (*database, error) {
     var db *database = nil
     var err error = nil
     var idx int = -1
-    var val string
+    var dur, val string
     tv := uint64(time.Now().UnixNano()) / uint64(time.Millisecond)
 
     if val, err = RecvFrom(t.ch); err == nil {
         if idx, err = strconv.Atoi(val); err == nil {
             val, err = RecvFrom(t.ch)
+            dur, err = RecvFrom(t.ch)
         }
     }
 
     if err == nil {
-        dp, _ := NewDataPoint(tv, val)
+        dp, _ := NewDataPoint(tv, dur, val)
         Evaluate(&dp, &t.db[idx])
         //val = strconv.FormatInt(int64(idx), 16)
         //val = t.db[0].rate

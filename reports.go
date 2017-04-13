@@ -6,6 +6,7 @@ import (
 
 type datapoint struct {
     x, y float64
+    d string
 }
 
 type database struct {
@@ -37,9 +38,9 @@ func NewDataBase(target, task string, scale []float64, units []string) database 
         units: units}
 }
 
-func NewDataPoint(t uint64, y string) (datapoint, error) {
+func NewDataPoint(t uint64, d, y string) (datapoint, error) {
     var err error = nil
-    dp := datapoint{x: 0, y:0}
+    dp := datapoint{x: 0, y:0, d:d}
     dp.x = float64(t)
     dp.y, err = strconv.ParseFloat(y, 64)
     return dp, err

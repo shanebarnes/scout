@@ -71,7 +71,9 @@ func (t *TargetSsh) Watch() error {
             } else if session, err = t.client.NewSession(); err == nil {
                 buffer.Truncate(0)
                 session.Stdout = &buffer
+                start := time.Now()
                 if err = session.Run(t.impl.task[i].Cmd); err == nil {
+                    elapsed := time.Since(start)
                     value := strings.Trim(buffer.String(), " \r\n")
                     select {
                         case *t.impl.ch <- strconv.Itoa(i):
@@ -79,6 +81,10 @@ func (t *TargetSsh) Watch() error {
                     }
                     select {
                         case *t.impl.ch <- value:
+                        default:
+                    }
+                    select {
+                        case *t.impl.ch <- elapsed.String():
                         default:
                     }
                 }
