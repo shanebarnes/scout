@@ -18,8 +18,8 @@ func ReportThread(t []target) {
     writer.Comma = '\t'
     defer writer.Flush()
 
-    writer.Write([]string{"target", "operation", "date", "diff", "rate", "raw"})
-    writer.Flush()
+    //writer.Write([]string{"target", "operation", "date", "diff", "rate", "raw"})
+    //writer.Flush()
 
     for {
         groupReports := 0
@@ -51,9 +51,9 @@ func ReportThread(t []target) {
 
             if taskReports > 0 {
                 groupReports = groupReports + 1
-            } else {
-                continue
-            }
+            } //else {
+            //    continue
+            //}
 
             var data = [][]string{{}}
             for j := range impl.db {
@@ -98,12 +98,12 @@ func ReportThread(t []target) {
                 }
                 data = append(data, record)
             }
-            writer.WriteAll(data)
+            //writer.WriteAll(data)
             _stdscr.Refresh()
         }
 
         if groupReports == 0 {
-            time.Sleep(time.Millisecond * 500)
+            time.Sleep(time.Millisecond * 1000)
         }
     }
 }

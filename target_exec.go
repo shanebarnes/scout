@@ -30,10 +30,12 @@ func (t TargetExec) Watch() error {
             // Command failed
         }
 
-        diff := time.Since(start).Nanoseconds() / int64(time.Millisecond)
-        if (diff < 500) {
-            time.Sleep(time.Millisecond * (500 - time.Duration(diff)))
+        t.impl.nextWatch = t.impl.nextWatch.Add(1000 * time.Millisecond)
+        for time.Since(t.impl.nextWatch).Nanoseconds() / int64(time.Millisecond) >= 1000 {
+            t.impl.nextWatch = t.impl.nextWatch.Add(1000 * time.Millisecond)
         }
+
+        time.Sleep(t.impl.nextWatch.Sub(time.Now()))
     }
 
     return err

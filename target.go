@@ -16,6 +16,7 @@ type TargetImpl struct {
     cmds string
     db []database
     ch *chan string
+    nextWatch time.Time
     wait *sync.WaitGroup
 }
 
@@ -60,7 +61,7 @@ func NewImpl(t *TargetImpl, conf TargetEntry, tasks TaskArr) error {
     }
 
     t.cmds = cmdBuffer.String() + "echo -n '{\"info\":[';" + valBuffer.String() + "echo ']}'"
-
+    t.nextWatch = time.Now()
     return err
 }
 
@@ -82,10 +83,10 @@ func RecordImpl(t *TargetImpl, obsData []byte, obsTime time.Duration) (error) {
     var info TargetInfo
 
     if err = json.Unmarshal(obsData, &info); err == nil {
-        for j := range info.Info {
-            value := strings.Trim(string(info.Info[j]), " \r\n")
+        for i := range info.Info {
+            value := strings.Trim(string(info.Info[i]), " \r\n")
             select {
-                case *t.ch <- strconv.Itoa(j):
+                case *t.ch <- strconv.Itoa(i):
                 default:
             }
             select {
