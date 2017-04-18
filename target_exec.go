@@ -2,8 +2,6 @@ package main
 
 import (
     "os/exec"
-    "strconv"
-    "strings"
     "time"
 )
 
@@ -17,46 +15,25 @@ func (t *TargetExec) New(conf TargetEntry, tasks TaskArr) error {
 
 func (t TargetExec) Find() error {
     defer t.impl.wait.Done()
-
-    //_stdscr.MovePrintf(0, 0, "Finding target %s...\n", t.impl.conf.Target.Addr)
-    //_stdscr.Refresh()
-
     return nil
 }
 
 func (t TargetExec) Watch() error {
-    //var buffer []byte
     var err error = nil
     defer t.impl.wait.Done()
 
     for {
-        for i := range t.impl.task {
-            start := time.Now()
-            if buffer, err1 := exec.Command("bash", "-c", t.impl.task[i].Cmd).Output(); err1 == nil {
-                elapsed := time.Since(start)
-                value := strings.Trim(string(buffer[:]), " \r\n")
-                select {
-                    case *t.impl.ch <- strconv.Itoa(i):
-                    default:
-                }
-                select {
-                    case *t.impl.ch <- value:
-                    default:
-                }
-                select {
-                    case *t.impl.ch <- elapsed.String():
-                    default:
-                }
-                /*select {
-                    case *t.impl.ch <- value:
-                    default:
-                }*/
-            } else {
-                // Command failed
-            }
+        start := time.Now()
+        if buffer, err := exec.Command("bash", "-c", t.impl.cmds).Output(); err == nil {
+            RecordImpl(&t.impl, buffer, time.Since(start))
+        } else {
+            // Command failed
         }
 
-        time.Sleep(time.Millisecond * 500)
+        diff := time.Since(start).Nanoseconds() / int64(time.Millisecond)
+        if (diff < 500) {
+            time.Sleep(time.Millisecond * (500 - time.Duration(diff)))
+        }
     }
 
     return err

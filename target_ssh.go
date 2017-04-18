@@ -5,8 +5,6 @@ import (
     "golang.org/x/crypto/ssh"
     "io/ioutil"
     "log"
-    "strconv"
-    "strings"
     "sync"
     "time"
 )
@@ -62,41 +60,30 @@ func (t *TargetSsh) Watch() error {
     defer t.impl.wait.Done()
 
     for {
-        for i := range t.impl.task {
-            if t.client == nil {
-                var wg sync.WaitGroup
-                wg.Add(1)
-                t.impl.wait = &wg
-                target.Find(t)
-            } else if session, err = t.client.NewSession(); err == nil {
-                buffer.Truncate(0)
-                session.Stdout = &buffer
-                start := time.Now()
-                if err = session.Run(t.impl.task[i].Cmd); err == nil {
-                    elapsed := time.Since(start)
-                    value := strings.Trim(buffer.String(), " \r\n")
-                    select {
-                        case *t.impl.ch <- strconv.Itoa(i):
-                        default:
-                    }
-                    select {
-                        case *t.impl.ch <- value:
-                        default:
-                    }
-                    select {
-                        case *t.impl.ch <- elapsed.String():
-                        default:
-                    }
-                }
+        start := time.Now()
+        if t.client == nil {
+            var wg sync.WaitGroup
+            wg.Add(1)
+            t.impl.wait = &wg
+            target.Find(t)
+        } else if session, err = t.client.NewSession(); err == nil {
+            buffer.Truncate(0)
+            session.Stdout = &buffer
+            if err = session.Run(t.impl.cmds); err == nil {
 
-                session.Close()
-                session = nil
-            } else {
-                t.client = nil
+                RecordImpl(&t.impl, buffer.Bytes(), time.Since(start))
             }
+
+            session.Close()
+            session = nil
+        } else {
+            t.client = nil
         }
 
-        time.Sleep(time.Millisecond * 500)
+        diff := time.Since(start).Nanoseconds() / int64(time.Millisecond)
+        if (diff < 500) {
+            time.Sleep(time.Millisecond * (500 - time.Duration(diff)))
+        }
     }
 
     return err

@@ -69,7 +69,7 @@ func main() {
     channels := make([]chan string, len(arr))
     var wg sync.WaitGroup
     for i := range arr {
-        channels[i] = make(chan string, 10)
+        channels[i] = make(chan string, 1000)
         if arr[i].Target.Prot == "SSH" {
             test := new(TargetSsh)
             target.New(test, arr[i], tasks)
