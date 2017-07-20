@@ -5,10 +5,11 @@ type MenuImpl struct {
     description string
     parent      *Menu
     children    []*Menu
+    winHeight, winWidth, winX, winY int
 }
 
 type Menu interface {
-    New() error
+    New(h, w, x, y int) error
     Delete() error
     SetTitle(title string)
     SetParent(parent *Menu) error
