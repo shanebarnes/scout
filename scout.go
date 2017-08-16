@@ -18,6 +18,7 @@ import (
 
 const _VERSION string = "0.3.0"
 var _stdscr *gc.Window = nil
+var _database *[][]database = nil
 
 func sigHandler(ch *chan os.Signal) {
     sig := <-*ch
@@ -67,8 +68,11 @@ func main() {
 
     targets := make([]target, len(arr))
     channels := make([]chan string, len(arr))
+
+    db := make([][]database, len(arr))
     var wg sync.WaitGroup
     for i := range arr {
+        db[i] = make([]database, len(tasks))
         channels[i] = make(chan string, 1000)
         if arr[i].Target.Prot == "SSH" {
             test := new(TargetSsh)
@@ -84,10 +88,13 @@ func main() {
             targets[i] = test
         }
     }
+
+    _database = &db
     wg.Add(len(targets))
     for i := range targets {
         go target.Watch(targets[i])
     }
+    go handleRequests()
     ReportThread(targets)
     wg.Wait()
 }
@@ -254,13 +261,13 @@ func reportTargets(reports *[]database) {
 
     for i := range *reports {
         x := 0
-        _stdscr.MovePrintf(i, x, "%-15s", (*reports)[i].target)
+        _stdscr.MovePrintf(i, x, "%-15s", (*reports)[i].Target)
 
         x += 15
         _stdscr.MovePrintln(i, x, "[")
 
         x += 1
-        ticks := uint64((*reports)[i].rate) / yScale
+        ticks := uint64((*reports)[i].Rate) / yScale
 
         for j := 0; j < maxTicks; j++ {
             if (j * 100 / maxTicks >= 66) {
@@ -283,9 +290,9 @@ func reportTargets(reports *[]database) {
         _stdscr.ColorOff(gc.C_RED)
         _stdscr.ColorOff(gc.C_YELLOW)
         _stdscr.ColorOff(gc.C_CYAN)
-        _stdscr.MovePrintf(i, x, "%6d %s] %s\n", uint64((*reports)[i].rate), (*reports)[i].units, (*reports)[i].task)
+        _stdscr.MovePrintf(i, x, "%6d %s] %s\n", uint64((*reports)[i].Rate), (*reports)[i].Units, (*reports)[i].Task)
 
-        total += uint64((*reports)[i].rate)
+        total += uint64((*reports)[i].Rate)
     }
 
     _stdscr.MovePrintf(len(*reports), 0,  "%-15s", "Total")
