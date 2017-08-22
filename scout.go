@@ -19,6 +19,7 @@ import (
 const _VERSION string = "0.3.0"
 var _stdscr *gc.Window = nil
 var _database *[][]database = nil
+var _tasks *TaskArr = nil
 
 func sigHandler(ch *chan os.Signal) {
     sig := <-*ch
@@ -61,6 +62,7 @@ func main() {
     }
 
     tasks, err2 := parseExecution(&order.Execution)
+    _tasks = &tasks
     if (err2 != nil ) {
         fmt.Println(err2)
         os.Exit(1)
