@@ -10,8 +10,14 @@ export GOBIN="${GOPATH}/bin"
 cd "$GOPATH"
 mkdir -p "$GOBIN"
 
-printf "Downloading and installing packages and dependencies...\n"
-go get ./...
+which glide &> /dev/null
+
+if [ $? -eq 0 ]; then
+    glide install
+else
+    printf "Downloading and installing packages and dependencies...\n"
+    go get ./...
+fi
 
 printf "Compiling packages and dependencies...\n"
 go build -ldflags -s
