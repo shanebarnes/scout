@@ -1,6 +1,21 @@
 #!/bin/bash
 
+command -v glide > /dev/null 2>&1
+cmd_glide=$?
+
 set -e
+set -o errtrace
+
+function err_handler() {
+    local frame=0
+    while caller $frame; do
+        ((frame++));
+    done
+    echo "$*"
+    exit 1
+}
+
+trap 'err_handler' SIGINT ERR
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export GOPATH="$script_dir"
@@ -9,13 +24,13 @@ export GOBIN="${GOPATH}/bin"
 
 cd "$GOPATH"
 mkdir -p "$GOBIN"
+cd "${GOPATH}/src/github.com/shanebarnes/scout"
 
-which glide &> /dev/null
+printf "Downloading and installing packages and dependencies...\n"
 
-if [ $? -eq 0 ]; then
-    glide install
+if [ $cmd_glide -eq 0 ]; then
+    glide -y glide.yaml install
 else
-    printf "Downloading and installing packages and dependencies...\n"
     go get ./...
 fi
 
