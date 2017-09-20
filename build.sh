@@ -35,6 +35,6 @@ else
 fi
 
 printf "Compiling packages and dependencies...\n"
-go build -ldflags -s
+go build -v -ldflags -s
 
 exit $?

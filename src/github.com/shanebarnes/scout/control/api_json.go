@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
     "encoding/json"
@@ -9,9 +9,15 @@ import (
     "strconv"
 
     "github.com/gorilla/mux"
+    "github.com/shanebarnes/scout/execution"
+    "github.com/shanebarnes/scout/mission"
 )
 
-func handleRequests() {
+var DATABASE *[][]Database = nil
+var TASKS *execution.TaskArray = nil
+
+
+func HandleRequests() {
     router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", homeHandler)
     router.HandleFunc("/reports", reportsHandler)
@@ -20,7 +26,7 @@ func handleRequests() {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "scout %s\r\n", _VERSION)
+    fmt.Fprintf(w, "scout %s\r\n", mission.GetVersion())
 }
 
 func errorHandler(writer http.ResponseWriter, status int) {
@@ -59,20 +65,20 @@ func reportsHandler(writer http.ResponseWriter, request *http.Request) {
     encoder := json.NewEncoder(writer)
 
     if _, err := queryHandler(writer, request, encoder); err == nil {
-        encoder.Encode(*_database)
+        encoder.Encode(*DATABASE)
     }
 }
 
-func taskHandler(writer http.ResponseWriter, query url.Values) (map[int]TaskEntry, error) {
-    tasks := make(map[int]TaskEntry)
+func taskHandler(writer http.ResponseWriter, query url.Values) (map[int]execution.TaskEntry, error) {
+    tasks := make(map[int]execution.TaskEntry)
     var err error = nil
 
     for key, val := range query {
         if key == "id" {
             for _, i := range val {
                 if id, e := strconv.Atoi(i); e == nil {
-                    if (id < len(*_tasks)) && (id >= 0) {
-                        tasks[id] = (*_tasks)[id]
+                    if (id < len(*TASKS)) && (id >= 0) {
+                        tasks[id] = (*TASKS)[id]
                     } else {
                         err = errors.New("Task '" + i + "' not found")
                         break
@@ -102,7 +108,7 @@ func tasksHandler(writer http.ResponseWriter, request *http.Request) {
     if query, err := queryHandler(writer, request, encoder); err == nil {
         if tasks, err := taskHandler(writer, query); err == nil {
             if len(tasks) == 0 {
-                for i, v := range *_tasks {
+                for i, v := range *TASKS {
                     tasks[i] = v
                 }
             }

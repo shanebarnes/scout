@@ -1,4 +1,4 @@
-package main
+package control
 
 const (
     BIN_   float64 = 1 << iota

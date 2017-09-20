@@ -1,4 +1,4 @@
-package main
+package control
 
 type MenuImpl struct {
     title       string

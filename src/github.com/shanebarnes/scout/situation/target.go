@@ -1,4 +1,4 @@
-package main
+package situation
 
 import (
     "bytes"
@@ -8,23 +8,24 @@ import (
     "strings"
     "sync"
     "time"
+
+    "github.com/shanebarnes/scout/execution"
 )
 
 type TargetImpl struct {
-    conf TargetEntry
-    task TaskArr
+    Conf TargetEntry
+    Task execution.TaskArray
     cmds string
-    db []database
-    ch *chan string
-    nextWatch time.Time
-    wait *sync.WaitGroup
+    Ch *chan string
+    NextWatch time.Time
+    Wait *sync.WaitGroup
 }
 
-type target interface {
-    New(conf TargetEntry, t TaskArr) error
+type Target interface {
+    New(conf TargetEntry, t execution.TaskArray) error
     Find() error
     Watch() error
-    Report() (*database, error)
+    Report() (*TargetObs, error)
     GetImpl() *TargetImpl
 }
 
@@ -32,27 +33,31 @@ type TargetInfo struct {
     Info []string `json:"info"`
 }
 
-func NewImpl(t *TargetImpl, conf TargetEntry, tasks TaskArr) error {
+type TargetObs struct {
+    Idx int
+    Tv uint64
+    Dur string
+    Val string
+}
+
+func NewImpl(t *TargetImpl, conf TargetEntry, tasks execution.TaskArray) error {
     var err error = nil
     var cmdBuffer, valBuffer bytes.Buffer
 
-    t.conf = conf
+    t.Conf = conf
     // Todo: move to scout parsing
     for i := range tasks {
         for j := range conf.Target.Sys {
             if conf.Target.Sys[j] == tasks[i].Exec.Sys {
-                t.task = append(t.task, tasks[i])
+                t.Task = append(t.Task, tasks[i])
             }
         }
     }
 
-    t.db =  make([]database, len(t.task))
     // @todo Run all commands in parallel and do not assume bash target
     // environment.
-    for i := range t.db {
-        t.db[i] = NewDataBase(conf.Target.Name, t.task[i].Cmd, t.task[i].Scale, t.task[i].Units)
-
-        cmdBuffer.WriteString("val" + strconv.Itoa(i) + "=$(" + t.task[i].Cmd + ");")
+    for i := range t.Task {
+        cmdBuffer.WriteString("val" + strconv.Itoa(i) + "=$(" + t.Task[i].Cmd + ");")
         if i > 0 {
             valBuffer.WriteString("printf \",\\\"$val" + strconv.Itoa(i) + "\\\"\";")
         } else {
@@ -61,7 +66,7 @@ func NewImpl(t *TargetImpl, conf TargetEntry, tasks TaskArr) error {
     }
 
     t.cmds = cmdBuffer.String() + "echo -n '{\"info\":[';" + valBuffer.String() + "echo ']}'"
-    t.nextWatch = time.Now()
+    t.NextWatch = time.Now()
     return err
 }
 
@@ -86,15 +91,15 @@ func RecordImpl(t *TargetImpl, obsData []byte, obsTime time.Duration) (error) {
         for i := range info.Info {
             value := strings.Trim(string(info.Info[i]), " \r\n")
             select {
-                case *t.ch <- strconv.Itoa(i):
+                case *t.Ch <- strconv.Itoa(i):
                 default:
             }
             select {
-                case *t.ch <- value:
+                case *t.Ch <- value:
                 default:
             }
             select {
-                case *t.ch <- obsTime.String():
+                case *t.Ch <- obsTime.String():
                 default:
             }
         }
@@ -105,27 +110,17 @@ func RecordImpl(t *TargetImpl, obsData []byte, obsTime time.Duration) (error) {
     return err
 }
 
-func ReportImpl(t *TargetImpl) (*database, error) {
-    var db *database = nil
+func ReportImpl(t *TargetImpl) (*TargetObs, error) {
     var err error = nil
-    var idx int = -1
-    var dur, val string
-    tv := uint64(time.Now().UnixNano()) / uint64(time.Millisecond)
+    obs := TargetObs{ Idx: -1, Tv: uint64(time.Now().UnixNano()) / uint64(time.Millisecond) }
 
-    if val, err = RecvFrom(t.ch); err == nil {
-        if idx, err = strconv.Atoi(val); err == nil {
-            val, err = RecvFrom(t.ch)
-            dur, err = RecvFrom(t.ch)
+    // @todo Use a single struct for value and duration
+    if obs.Val, err = RecvFrom(t.Ch); err == nil {
+        if obs.Idx, err = strconv.Atoi(obs.Val); err == nil {
+            obs.Val, err = RecvFrom(t.Ch)
+            obs.Dur, err = RecvFrom(t.Ch)
         }
     }
 
-    if err == nil {
-        dp, _ := NewDataPoint(tv, dur, val)
-        Evaluate(&dp, &t.db[idx])
-        //val = strconv.FormatInt(int64(idx), 16)
-        //val = t.db[0].rate
-        db = &t.db[idx]
-    }
-
-    return db, err
+    return &obs, err
 }

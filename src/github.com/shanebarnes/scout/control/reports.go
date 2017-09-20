@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
     "strconv"
@@ -10,7 +10,7 @@ type datapoint struct {
     d string `json:"d"`
 }
 
-type database struct {
+type Database struct {
     N uint64 `json:"N"`
     dp0 datapoint `json:"dp0"`
     DpN datapoint `json:"dpN"`
@@ -29,8 +29,9 @@ func IsNum(s string) bool {
     return err == nil
 }
 
-func NewDataBase(target, task string, scale []float64, units []string) database {
-    return database{
+func NewDataBase(target, task string, scale []float64, units []string) Database {
+    // @todo Return reference
+    return Database{
         N: 0,
         dp0: datapoint{X: 0, Y: 0},
         DpN: datapoint{X: 0, Y: 0},
@@ -52,7 +53,7 @@ func NewDataPoint(t uint64, d, y string) (datapoint, error) {
     return dp, err
 }
 
-func Evaluate(dp *datapoint, db *database) {
+func Evaluate(dp *datapoint, db *Database) {
     db.N++
     if db.N == 1 {
         db.dp0 = *dp
