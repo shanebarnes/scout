@@ -16,7 +16,7 @@ type Task struct {
 type TaskMap map[string]Task
 
 type TaskEntry struct {
-    Exec Execution
+    Exec ExecutionGroup
     Cmd string
     Desc string
     Ret string
@@ -24,7 +24,7 @@ type TaskEntry struct {
     Units []string
 }
 
-type Execution struct {
+type ExecutionGroup struct {
     Active bool `json:"active"`
     Sys string `json:"sys"`
     Desc []string `json:"desc"`
@@ -34,9 +34,9 @@ type Execution struct {
     Scale []float64 `json:"scale"`
     Units []string `json:"units"`
 }
-type ExecutionMap map[string]Execution
+type ExecutionMap map[string]ExecutionGroup
 
-type Execution1 struct {
+type Execution struct {
     Tasks ExecutionMap `json:"tasks"`
     Definitions TaskMap `json:"definitions"`
 }
@@ -55,7 +55,7 @@ func (slice TaskArray) Swap(i, j int) {
     slice[i], slice[j] = slice[j], slice[i]
 }
 
-func Parse(exec *Execution1) (TaskArray, error) {
+func Parse(exec *Execution) (TaskArray, error) {
     // @todo Return a refernce?
     size := 0
     ret := make(TaskArray, 0)

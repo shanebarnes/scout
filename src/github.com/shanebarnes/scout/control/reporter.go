@@ -148,7 +148,7 @@ func ReportThread(t []situation.Target) {
             }
 
             // This is not thread-safe
-            //(*_database)[0] = impl.db
+            (*REPORTS)[i] = tdb[i]
             //writer.WriteAll(data)
             _stdscr.Refresh()
         }

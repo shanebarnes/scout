@@ -62,6 +62,11 @@ func main() {
         os.Exit(1)
     }
 
+    if err = control.Parse(&order.Control); err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+
     targets := make([]situation.Target, len(arr))
     channels := make([]chan string, len(arr))
 
@@ -85,12 +90,12 @@ func main() {
         }
     }
 
-    control.DATABASE = &db
+    control.REPORTS = &db
     wg.Add(len(targets))
     for i := range targets {
         go situation.Target.Watch(targets[i])
     }
-    go control.HandleRequests()
+    go control.HandleRequests(&order.Control)
     control.ReportThread(targets)
     wg.Wait()
 }

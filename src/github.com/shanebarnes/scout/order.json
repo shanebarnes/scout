@@ -173,6 +173,7 @@
     },
     "sustainment": { "protocol": [ "exec", "ssh" ] },
     "control": {
+        "root": "./vendor/github.com/freeboard/freeboard/",
         "frequency": "500",
         "duration": "0",
         "reports" : {

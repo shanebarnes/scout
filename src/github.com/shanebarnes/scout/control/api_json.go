@@ -13,15 +13,16 @@ import (
     "github.com/shanebarnes/scout/mission"
 )
 
-var DATABASE *[][]Database = nil
+var REPORTS *[][]Database = nil
 var TASKS *execution.TaskArray = nil
 
-
-func HandleRequests() {
+func HandleRequests(ctl *Control) {
     router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", homeHandler)
     router.HandleFunc("/reports", reportsHandler)
     router.HandleFunc("/tasks", tasksHandler)
+
+    router.PathPrefix("/dashboard").Handler(http.StripPrefix("/dashboard", http.FileServer(http.Dir(ctl.Root))))
     http.ListenAndServe(":8080", router)
 }
 
@@ -60,12 +61,52 @@ func queryHandler(writer http.ResponseWriter, request *http.Request, encoder *js
     return vals, err
 }
 
+func reportHandler(writer http.ResponseWriter, query url.Values) (map[int][]Database, error) {
+    reports := make(map[int][]Database)
+    var err error = nil
+
+    // @todo add subid for particular sub-reports
+    // @todo add autorefresh using JS or websockets
+    for key, val := range query {
+        if key == "id" {
+            for _, i := range val {
+                if id, e := strconv.Atoi(i); e == nil {
+                    if (id < len(*REPORTS)) && (id >= 0) {
+                        reports[id] = (*REPORTS)[id]
+                    } else {
+                        err = errors.New("Report '" + i + "' not found")
+                        break
+                    }
+                } else {
+                    err = errors.New("'" + i + "' is not a number")
+                    break
+                }
+            }
+        } else {
+            err = errors.New("Key '" + key + "' not supported")
+        }
+
+        if err != nil {
+            errorHandler(writer, http.StatusBadRequest)
+            break
+        }
+    }
+
+    return reports, err
+}
+
 func reportsHandler(writer http.ResponseWriter, request *http.Request) {
-    //db: = [][]database
     encoder := json.NewEncoder(writer)
 
-    if _, err := queryHandler(writer, request, encoder); err == nil {
-        encoder.Encode(*DATABASE)
+    if query, err := queryHandler(writer, request, encoder); err == nil {
+        if reports, err := reportHandler(writer, query); err == nil {
+            if len(reports) == 0 {
+                for i, v := range *REPORTS {
+                    reports[i] = v
+                }
+            }
+            encoder.Encode(reports)
+        }
     }
 }
 

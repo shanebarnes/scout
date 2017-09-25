@@ -1,4 +1,5 @@
 package: github.com/shanebarnes/scout
 import:
+  - package: github.com/freeboard/freeboard
   - package: github.com/gorilla/mux
   - package: github.com/rthornton128/goncurses
