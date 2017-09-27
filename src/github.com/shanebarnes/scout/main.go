@@ -4,7 +4,6 @@ import (
     "encoding/json"
     "flag"
     "fmt"
-    "log"
     "os"
     "os/signal"
     "syscall"
@@ -35,8 +34,6 @@ func main() {
                   syscall.SIGTERM,
                   syscall.SIGSTOP)
     go sigHandler(&sigs)
-
-    initLog()
 
     orderFile := flag.String("order", "order.json", "file containing scouting operations order")
     /*reportFile := */flag.String("report", "report.csv", "file containing scouting report")
@@ -98,18 +95,6 @@ func main() {
     go control.HandleRequests(&order.Control)
     control.ReportThread(targets)
     wg.Wait()
-}
-
-func initLog() {
-    log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-}
-
-func getPrettyJson(v interface{}) string {
-    buffer, err := json.MarshalIndent(v, "", "    ")
-    if (err != nil) {
-
-    }
-    return string(buffer)
 }
 
 func loadOrder(fileName *string) Order {

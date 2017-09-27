@@ -49,7 +49,7 @@ func ReportThread(t []situation.Target) {
         tdb[i] = make([]Database, len(impl.Task))
         for j := range impl.Task {
             //t.db[i][j] = NewDataBase(conf.Target.Name, t.task[i].Cmd, t.task[i].Scale, t.task[i].Units)
-            tdb[i][j] = NewDataBase(impl.Conf.Target.Name, impl.Task[j].Cmd, impl.Task[j].Scale, impl.Task[j].Units)
+            tdb[i][j] = NewDataBase(impl.Conf.Target.Name, impl.Task[j].Desc, impl.Task[j].Form, impl.Task[j].Scale, impl.Task[j].Units)
         }
     }
 

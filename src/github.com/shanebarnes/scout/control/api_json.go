@@ -6,9 +6,11 @@ import (
     "fmt"
     "net/http"
     "net/url"
+    "os"
     "strconv"
 
     "github.com/gorilla/mux"
+    "github.com/shanebarnes/scout/common"
     "github.com/shanebarnes/scout/execution"
     "github.com/shanebarnes/scout/mission"
 )
@@ -19,11 +21,33 @@ var TASKS *execution.TaskArray = nil
 func HandleRequests(ctl *Control) {
     router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", homeHandler)
+    router.HandleFunc("/dashboard", dashboardHandler)
+    router.PathPrefix("/freeboard").Handler(http.StripPrefix("/freeboard", http.FileServer(http.Dir(ctl.Root))))
     router.HandleFunc("/reports", reportsHandler)
     router.HandleFunc("/tasks", tasksHandler)
 
-    router.PathPrefix("/dashboard").Handler(http.StripPrefix("/dashboard", http.FileServer(http.Dir(ctl.Root))))
+    loadDashboard(ctl)
     http.ListenAndServe(":8080", router)
+}
+
+func loadDashboard(ctl *Control) {
+    dashboard := NewDashboard()
+    if b, err := json.MarshalIndent(dashboard, "", "    "); err == nil {
+        if file, err := os.OpenFile(ctl.Root + "/" + ScoutFreeboard, os.O_CREATE | os.O_RDWR, 0644); err == nil {
+            if _, err := file.Write(b); err != nil {
+                common.LogError(err.Error())
+            }
+            file.Close()
+        } else {
+            common.LogError(err.Error())
+        }
+    } else {
+        common.LogError(err.Error())
+    }
+}
+
+func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+    http.Redirect(w, r, "/freeboard/#source=" + ScoutFreeboard, http.StatusSeeOther)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
