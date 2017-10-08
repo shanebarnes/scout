@@ -4,11 +4,13 @@ import (
     "encoding/json"
     "flag"
     "fmt"
+    "log"
     "os"
     "os/signal"
     "syscall"
     "sync"
 
+    "github.com/shanebarnes/goto/logger"
     "github.com/shanebarnes/scout/control"
     "github.com/shanebarnes/scout/execution"
     "github.com/shanebarnes/scout/mission"
@@ -18,7 +20,7 @@ import (
 func sigHandler(ch *chan os.Signal) {
     sig := <-*ch
     control.Stop()
-    fmt.Println("Captured sig", sig)
+    logger.PrintlnError("Captured sig " + sig.String())
     os.Exit(3)
 }
 
@@ -35,6 +37,12 @@ func main() {
                   syscall.SIGSTOP)
     go sigHandler(&sigs)
 
+    file, _ := os.OpenFile("scout.log", os.O_APPEND | os.O_CREATE | os.O_RDWR, 0644)
+    defer file.Close()
+
+    logger.Init(file, log.Ldate | log.Ltime | log.Lmicroseconds)
+    logger.SetLevel(logger.Info)
+
     orderFile := flag.String("order", "order.json", "file containing scouting operations order")
     /*reportFile := */flag.String("report", "report.csv", "file containing scouting report")
     flag.Usage = func() {
@@ -48,19 +56,19 @@ func main() {
 
     arr, err := situation.Parse(&order.Situation)
     if (err != nil ) {
-        fmt.Println(err)
+        logger.PrintlnError(err.Error())
         os.Exit(1)
     }
 
     tasks, err2 := execution.Parse(&order.Execution)
     control.TASKS = &tasks
     if (err2 != nil ) {
-        fmt.Println(err2)
+        logger.PrintlnError(err2.Error())
         os.Exit(1)
     }
 
     if err = control.Parse(&order.Control); err != nil {
-        fmt.Println(err)
+        logger.PrintlnError(err.Error())
         os.Exit(1)
     }
 
@@ -104,7 +112,7 @@ func loadOrder(fileName *string) Order {
     order := Order{}
     err := decoder.Decode(&order)
     if err != nil {
-        fmt.Println("error: ", err)
+        logger.PrintlnError(err.Error())
     }
 
     return order

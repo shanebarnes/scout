@@ -1,9 +1,5 @@
 package order
 
-import (
-    "errors"
-)
-
 type FragmentImpl struct {
     // mutex
 }

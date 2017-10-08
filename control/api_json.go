@@ -10,7 +10,7 @@ import (
     "strconv"
 
     "github.com/gorilla/mux"
-    "github.com/shanebarnes/scout/common"
+    "github.com/shanebarnes/goto/logger"
     "github.com/shanebarnes/scout/execution"
     "github.com/shanebarnes/scout/mission"
 )
@@ -35,14 +35,14 @@ func loadDashboard(ctl *Control) {
     if b, err := json.MarshalIndent(dashboard, "", "    "); err == nil {
         if file, err := os.OpenFile(ctl.Root + "/" + ScoutFreeboard, os.O_CREATE | os.O_RDWR, 0644); err == nil {
             if _, err := file.Write(b); err != nil {
-                common.LogError(err.Error())
+                logger.PrintlnError(err.Error())
             }
             file.Close()
         } else {
-            common.LogError(err.Error())
+            logger.PrintlnError(err.Error())
         }
     } else {
-        common.LogError(err.Error())
+        logger.PrintlnError(err.Error())
     }
 }
 
