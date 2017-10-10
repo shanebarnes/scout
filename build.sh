@@ -22,16 +22,14 @@ export GOPATH="$script_dir"
 export GOBIN="${GOPATH}/bin"
 #go env
 
-cd "$GOPATH"
 mkdir -p "$GOBIN"
-cd "${GOPATH}/src/github.com/shanebarnes/scout"
 
 printf "Downloading and installing packages and dependencies...\n"
 
 if [ $cmd_glide -eq 0 ]; then
     glide -y glide.yaml install
 else
-    go get ./...
+    go get -v ./...
 fi
 
 printf "Compiling packages and dependencies...\n"
