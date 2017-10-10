@@ -1,10 +1,14 @@
 package control
 
+import (
+    "strconv"
+)
+
 const ScoutFreeboard = "scout-freeboard.json"
 
 type fbCell struct {
     Three int `json:"3"`
-    Four  int `json:"4"`
+//    Four  int `json:"4"`
 }
 
 type fbDataSourceSettings struct {
@@ -26,7 +30,7 @@ type fbWidgetSettings struct {
     Value     string `json:"value"`
     Sparkline bool   `json:"sparkline"`
     Animate   bool   `json:"animate"`
-    Units     string `json:"units"`
+//    Units     string `json:"units"`
 }
 
 type fbWidget struct {
@@ -35,11 +39,12 @@ type fbWidget struct {
 }
 
 type fbPane struct {
-    Width       int
-    Row         fbCell
-    Col         fbCell
-    Col_width   int
-    Widgets   []fbWidget
+    Title       string   `json:"title"`
+    Width       int      `json:"width"`
+    Row         fbCell   `json:"row"`
+    Col         fbCell   `json:"col"`
+    Col_width   int      `json:"col_width"`
+    Widgets   []fbWidget `json:"widgets"`
 }
 
 type fbModel struct {
@@ -62,16 +67,56 @@ func newDataSourceSettings() *fbDataSourceSettings {
     return &fbDataSourceSettings{
         Url: "http://localhost:8080/reports",
         Use_thingproxy: true,
-        Refresh: 2,
+        Refresh: 5,
         Method: "GET"}
 }
 
-func NewDashboard() *fbModel {
+func newPane(title string, width, col, row int, widgets *[]fbWidget) *fbPane {
+    return &fbPane{
+        Title: title,
+        Width: width,
+        Row: fbCell{Three: row},
+        Col: fbCell{Three: col},
+        Col_width: width,
+        Widgets: *widgets}
+}
+
+func newWidget(title, value string) *fbWidget {
+    return &fbWidget{
+        Type: "text_widget",
+        Settings: *newWidgetSettings(title, value)}
+}
+
+func newWidgetSettings(title, value string) *fbWidgetSettings {
+    return &fbWidgetSettings{
+        Title: title,
+        Size: "regular",
+        Value: value,
+        Sparkline: true,
+        Animate: true}
+}
+
+func NewDashboard(reports *[][]Database) *fbModel {
+    var panes []fbPane
+
+    for i := range *reports {
+        var widgets []fbWidget
+        var target string = ""
+
+        for j := range (*reports)[i] {
+            target = (*reports)[i][j].Target
+            value := "datasources[\"reports\"][\"" + strconv.Itoa(i) + "\"][" + strconv.Itoa(j) + "][\"dpN\"][\"y\"]"
+            widgets = append(widgets, *newWidget((*reports)[i][j].Task, value))
+        }
+
+        panes = append(panes, *newPane(target, 1, i + 1, 1, &widgets))
+    }
+
     return &fbModel{
         Version: 1,
         Allow_edit: false,
         Plugins: nil,
-        Panes: nil,
+        Panes: panes,
         Datasources: []fbDataSource{*newDataSource()},
-        Columns: 3}
+        Columns: len(*reports)}
 }

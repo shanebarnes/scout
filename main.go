@@ -20,7 +20,7 @@ import (
 func sigHandler(ch *chan os.Signal) {
     sig := <-*ch
     control.Stop()
-    logger.PrintlnError("Captured sig " + sig.String())
+    logger.PrintlnInfo("Captured sig " + sig.String())
     os.Exit(3)
 }
 
@@ -75,10 +75,8 @@ func main() {
     targets := make([]situation.Target, len(arr))
     channels := make([]chan string, len(arr))
 
-    db := make([][]control.Database, len(arr))
     var wg sync.WaitGroup
     for i := range arr {
-        db[i] = make([]control.Database, len(tasks))
         channels[i] = make(chan string, 1000)
         if arr[i].Target.Prot == "SSH" {
             test := new(situation.TargetSsh)
@@ -95,13 +93,14 @@ func main() {
         }
     }
 
-    control.REPORTS = &db
     wg.Add(len(targets))
     for i := range targets {
         go situation.Target.Watch(targets[i])
     }
+
+    control.Init(targets)
     go control.HandleRequests(&order.Control)
-    control.ReportThread(targets)
+    control.ReportThread()
     wg.Wait()
 }
 

@@ -31,7 +31,7 @@ func HandleRequests(ctl *Control) {
 }
 
 func loadDashboard(ctl *Control) {
-    dashboard := NewDashboard()
+    dashboard := NewDashboard(REPORTS)
     if b, err := json.MarshalIndent(dashboard, "", "    "); err == nil {
         if file, err := os.OpenFile(ctl.Root + "/" + ScoutFreeboard, os.O_CREATE | os.O_RDWR, 0644); err == nil {
             if _, err := file.Write(b); err != nil {
