@@ -1,0 +1,8 @@
+language: go
+go:
+- 1.8
+- 1.9
+install:
+- bash build.sh
+script:
+- bash build.sh
