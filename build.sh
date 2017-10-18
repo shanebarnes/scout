@@ -17,12 +17,12 @@ function err_handler() {
 
 trap 'err_handler' SIGINT ERR
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export GOPATH="$script_dir"
-export GOBIN="${GOPATH}/bin"
+#script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#export GOPATH="$script_dir"
+#export GOBIN="${GOPATH}/bin"
 #go env
 
-mkdir -p "$GOBIN"
+#mkdir -p "$GOBIN"
 
 printf "Downloading and installing packages and dependencies...\n"
 

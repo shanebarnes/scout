@@ -14,3 +14,12 @@ Collect and analyze information from a diverse set of network-capable devices
 [lin-link]:  https://travis-ci.org/shanebarnes/scout "Travis build status"
 [tag-badge]: https://img.shields.io/github/tag/shanebarnes/scout.svg "Latest"
 [tag-link]: https://github.com/shanebarnes/scout/releases "Latest"
+
+## Build Instructions
+
+``` shell
+$ git clone https://github.com/shanebarnes/scout $GOPATH/src/github.com/shanebarnes/scout
+$ cd $GOPATH/src/github.com/shanebarnes/scout
+$ glide install
+$ go build -v 
+```
