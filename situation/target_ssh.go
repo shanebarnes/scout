@@ -8,6 +8,7 @@ import (
     "sync"
     "time"
 
+    "github.com/shanebarnes/goto/logger"
     "github.com/shanebarnes/scout/execution"
 )
 
@@ -25,12 +26,15 @@ func (t *TargetSsh) Find() error {
     var config *ssh.ClientConfig = nil
     defer t.Impl.Wait.Done()
 
+    logger.PrintlnDebug("Attempting to find SSH target " + t.Impl.Conf.Target.Addr)
+
     if len(t.Impl.Conf.Credentials.Pass) > 0 {
         config = &ssh.ClientConfig {
             User: t.Impl.Conf.Credentials.User,
             Auth: []ssh.AuthMethod {
                 ssh.Password(t.Impl.Conf.Credentials.Pass),
             },
+            HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 // This timeout will block the update thread
             Timeout: 10000 * time.Millisecond,
         }
@@ -45,12 +49,17 @@ func (t *TargetSsh) Find() error {
             Auth: []ssh.AuthMethod {
                 ssh.PublicKeys(signer),
             },
+            HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 // This timeout will block the update thread
             Timeout: 10000 * time.Millisecond,
         }
     }
 
     t.client, err = ssh.Dial("tcp", t.Impl.Conf.Target.Addr + ":22", config)
+
+    if err != nil {
+        logger.PrintlnError("Cannot find target " + t.Impl.Conf.Target.Addr + ": " + err.Error())
+    }
 
     return err
 }

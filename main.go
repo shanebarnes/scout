@@ -79,17 +79,17 @@ func main() {
     for i := range arr {
         channels[i] = make(chan string, 1000)
         if arr[i].Target.Prot == "SSH" {
-            test := new(situation.TargetSsh)
-            situation.Target.New(test, arr[i], tasks)
-            test.Impl.Ch = &channels[i]
-            test.Impl.Wait = &wg
-            targets[i] = test
+            ssh := new(situation.TargetSsh)
+            ssh.New(arr[i], tasks)
+            ssh.Impl.Ch = &channels[i]
+            ssh.Impl.Wait = &wg
+            targets[i] = ssh
         } else {
-            test := new(situation.TargetExec)
-            situation.Target.New(test, arr[i], tasks)
-            test.Impl.Ch = &channels[i]
-            test.Impl.Wait = &wg
-            targets[i] = test
+            exec := new(situation.TargetExec)
+            exec.New(arr[i], tasks)
+            exec.Impl.Ch = &channels[i]
+            exec.Impl.Wait = &wg
+            targets[i] = exec
         }
     }
 
