@@ -1,16 +1,16 @@
 {
     "mission": "aws cluster network activity monitoring",
     "situation": {
-        "targets": [ "MAC1" ],
+        "targets": [ "MACOS" ],
         "definitions": {
-            "LIN1": {
-                "name": "Virtual Box",
-                "addr": [ "192.168.1.83" ],
-                "cred": "FEDORA25",
+            "VBOX": {
+                "name": "VBox CentOS 7.4",
+                "addr": [ "192.168.1.71:22" ],
+                "cred": "CENTOS7",
                 "prot": "SSH",
                 "sys": [ "LINUX", "UNIX" ]
             },
-            "MAC1": {
+            "MACOS": {
                 "name": "MacBook Pro",
                 "addr": [ "" ],
                 "cred": "EXEC",
@@ -24,10 +24,10 @@
                 "pass": "",
                 "cert": ""
             },
-            "FEDORA25": {
-                "user": "user",
-                "pass": "pass",
-                "cert": "cert.pem"
+            "CENTOS7": {
+                "user": "sbarnes",
+                "pass": "#donthackmebro",
+                "cert": ""
             }
         }
     },
@@ -41,9 +41,14 @@
                 "vars": [
                     [ " " ]
                 ],
-                "reports": [ "RAW" ],
-                "scale": [ 1 ],
-                "units": [ "%" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "%",
+                        "widget": "gauge"
+                    }
+                ]
             },
             "LINUX_NET_BYTES": {
                 "active": true,
@@ -54,21 +59,54 @@
                     [ "/sys/class/net/", "enp0s3", "/statistics/", "rx_bytes" ],
                     [ "/sys/class/net/", "enp0s3", "/statistics/", "tx_bytes" ]
                 ],
-                "reports": [ "RAW", "RATE" ],
-                "scale": [ 1, 8 ],
-                "units": [ "B", "bps" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "B",
+                        "widget": ""
+                    },
+                    {
+                        "type": "RATE",
+                        "scale": 0.000008,
+                        "units": "Mbps",
+                        "widget": "sparkline"
+                    }
+                ]
             },
             "LINUX_NET_RTT_MS": {
-                "active": true,
+                "active": false,
                 "sys": "LINUX",
                 "desc": [ "average ping in ms" ],
                 "task": "UNIX_PING",
                 "vars": [
                     [ "192.168.1.254", "rtt" ]
                 ],
-                "reports": [ "RAW" ],
-                "scale": [ 1 ],
-                "units": [ "ms" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "ms",
+                        "widget": "sparkline"
+                    }
+                ]
+            },
+            "LINUX_PROCESS_UP": {
+                "active": true,
+                "sys": "LINUX",
+                "desc": [ "GNOME display manager status" ],
+                "task": "UNIX_PSGREP",
+                "vars": [
+                    [ "/usr/sbin/gdm" ]
+                ],
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "",
+                        "widget": "indicator"
+                    }
+                ]
             },
             "LINUX_UPTIME_SEC": {
                 "active": true,
@@ -78,9 +116,14 @@
                 "vars": [
                     [ "/proc/uptime", " | awk '{print $1}'", "", "" ]
                 ],
-                "reports": [ "RAW" ],
-                "scale": [ 1 ],
-                "units": [ "sec" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "sec",
+                        "widget": "sparkline"
+                    }
+                ]
             },
             "MACOS_CPU_USE": {
                 "active": true,
@@ -90,22 +133,44 @@
                 "vars": [
                     []
                 ],
-                "reports": [ "RAW" ],
-                "scale": [ 1 ],
-                "units": [ "%" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "%",
+                        "widget": "gauge"
+                    }
+                ]
             },
             "MACOS_NET_BYTES": {
                 "active": true,
                 "sys": "MACOS",
-                "desc": [ "network en0 rx bytes", "network en0 tx bytes" ],
+                "desc": [ "network lo0 rx bytes", "network lo0 tx bytes" ],
                 "task": "MACOS_NETSTAT",
                 "vars": [
-                    [ "en0", "7" ],
-                    [ "en0", "10" ]
+                    [ "lo0", "6" ],
+                    [ "lo0", "9" ]
                 ],
-                "reports": [ "DIFF", "RAW", "RATE" ],
-                "scale": [ 1, 1, 8 ],
-                "units": [ "B", "B", "bps" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "B",
+                        "widget": ""
+                    },
+                    {
+                        "type": "DIFF",
+                        "scale": 1,
+                        "units": "B",
+                        "widget": ""
+                    },
+                    {
+                        "type": "RATE",
+                        "scale": 0.000008,
+                        "units": "Mbps",
+                        "widget": "sparkline"
+                    }
+                ]
             },
             "MACOS_NET_RTT_MS": {
                 "active": true,
@@ -115,9 +180,14 @@
                 "vars": [
                     [ "google.com", "round-trip" ]
                 ],
-                "reports": [ "RAW" ],
-                "scale": [ 1 ],
-                "units": [ "ms" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "ms",
+                        "widget": "sparkline"
+                    }
+                ]
             },
             "MACOS_UPTIME_SEC": {
                 "active": true,
@@ -127,9 +197,14 @@
                 "vars": [
                      []
                 ],
-                "reports": [ "RAW" ],
-                "scale": [ 1 ],
-                "units": [ "sec" ]
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "scale": 1,
+                        "units": "sec",
+                        "widget": "sparkline"
+                    }
+                ]
             }
         },
         "definitions": {
@@ -168,6 +243,12 @@
                 "vars": [ "#VAR1#", "#VAR2#" ],
                 "type": "uint64",
                 "task": "ping -c 1 #VAR1# | awk -F '/' '/#VAR2#/ {print $5;}'"
+            },
+            "UNIX_PSGREP": {
+                "reqs": [ "echo", "grep", "ps" ],
+                "vars": [ "#VAR1#" ],
+                "type": "float64",
+                "task": "ps cax | grep #VAR1# 2>&1 > /dev/null; if [ $? -eq 0 ]; then echo 1; else echo 0; fi"
             }
         }
     },

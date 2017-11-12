@@ -42,13 +42,14 @@ func initGui() {
 
 func Init(t []situation.Target) {
     _targets = t
+
     db := make([][]Database, len(t))
 
     for i := range t {
         impl := situation.Target.GetImpl(t[i])
         db[i] = make([]Database, len(impl.Task))
         for j := range impl.Task {
-            db[i][j] = NewDataBase(impl.Conf.Target.Name, impl.Task[j].Desc, /*impl.Task[j].Form,*/ impl.Task[j].Scale, impl.Task[j].Units)
+            db[i][j] = NewDataBase(impl.Conf.Target.Name, impl.Task[j].Desc, impl.Task[j].Exec.Reports)
         }
     }
 
@@ -67,6 +68,17 @@ func ReportThread() {
 
     //writer.Write([]string{"target", "operation", "date", "diff", "rate", "raw"})
     //writer.Flush()
+
+    //_db := new(DbImpl)
+    //_db.Open("scout.db")
+    //_db.InitTables()
+    //_db.InsertTargets(_targets)
+
+    //db2 := make([]*DbImpl, len(_targets))
+    //for i := range db2 {
+    //    db2[i] = new(DbImpl)
+    //    db2[i].Open("scout.db")
+    //}
 
     for {
         groupReports := 0
@@ -101,6 +113,10 @@ func ReportThread() {
 
                     taskReports = taskReports + 1
                 }
+
+                //if taskReports > 0 {
+                //_db.InsertReports((*REPORTS)[i])
+                //}
             }
 
             if taskReports > 0 {
@@ -164,4 +180,6 @@ func ReportThread() {
             time.Sleep(time.Millisecond * 100)
         }
     }
+
+    //_db.Close()
 }

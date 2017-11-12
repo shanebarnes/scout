@@ -23,3 +23,10 @@ $ cd $GOPATH/src/github.com/shanebarnes/scout
 $ glide install
 $ go build -v 
 ```
+
+To prevent long recompile times, install the SQLite3 dependency:
+
+``` shell
+$ cd vendor/github.com/mattn/go-sqlite3
+$ go install
+```

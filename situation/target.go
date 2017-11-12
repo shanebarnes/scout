@@ -67,6 +67,7 @@ func NewImpl(t *TargetImpl, conf TargetEntry, tasks execution.TaskArray) error {
 
     t.cmds = cmdBuffer.String() + "echo -n '{\"info\":[';" + valBuffer.String() + "echo ']}'"
     t.NextWatch = time.Now()
+
     return err
 }
 
@@ -106,6 +107,8 @@ func RecordImpl(t *TargetImpl, obsData []byte, obsTime time.Duration) (error) {
     } else {
         // Observation data parsing failed
     }
+
+    // This is where a SQLite3 transaction should occur
 
     return err
 }

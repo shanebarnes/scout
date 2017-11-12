@@ -2,6 +2,8 @@ package control
 
 import (
     "strconv"
+
+    "github.com/shanebarnes/scout/execution"
 )
 
 type datapoint struct {
@@ -18,10 +20,9 @@ type Database struct {
     Max float64 `json:"max"`
     Min float64 `json:"min"`
     Rate float64 `json:"rate"`
-    Scale []float64 `json:"scale"`
     Target string `json:"target"`
     Task string `json:"task"`
-    Units []string `json:"units"`
+    Reports []execution.TaskReport `json:"reports"`
 }
 
 func IsNum(s string) bool {
@@ -29,7 +30,7 @@ func IsNum(s string) bool {
     return err == nil
 }
 
-func NewDataBase(target, task string, scale []float64, units []string) Database {
+func NewDataBase(target, task string, reports []execution.TaskReport/*scale []float64, units []string, widget string*/) Database {
     // @todo Return reference
     return Database{
         N: 0,
@@ -39,10 +40,9 @@ func NewDataBase(target, task string, scale []float64, units []string) Database 
         Min: 0,
         Diff: 0,
         Rate: 0,
-        Scale: scale,
         Target: target,
         Task: task,
-        Units: units}
+        Reports: reports}
 }
 
 func NewDataPoint(t uint64, d, y string) (datapoint, error) {

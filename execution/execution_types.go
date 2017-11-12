@@ -4,6 +4,8 @@ import (
     "errors"
     "sort"
     "strings"
+
+//    "github.com/shanebarnes/goto/logger"
 )
 
 // define task as operation instead
@@ -20,19 +22,22 @@ type TaskEntry struct {
     Cmd string
     Desc string
     Ret string
-    Scale []float64
-    Units []string
+}
+
+type TaskReport struct {
+    Type   string  `json:"type"`
+    Scale  float64 `json:"scale"`
+    Units  string  `json:"units"`
+    Widget string  `json:"widget"`
 }
 
 type ExecutionGroup struct {
-    Active bool `json:"active"`
-    Sys string `json:"sys"`
-    Desc []string `json:"desc"`
-    Task string `json:"task"`
-    Vars [][]string `json:"vars"`
-    Reports []string `json:"reports"`
-    Scale []float64 `json:"scale"`
-    Units []string `json:"units"`
+    Active  bool         `json:"active"`
+    Sys     string       `json:"sys"`
+    Desc    []string     `json:"desc"`
+    Task    string       `json:"task"`
+    Vars    [][]string   `json:"vars"`
+    Reports []TaskReport `json:"reports"`
 }
 type ExecutionMap map[string]ExecutionGroup
 
@@ -56,7 +61,7 @@ func (slice TaskArray) Swap(i, j int) {
 }
 
 func Parse(exec *Execution) (TaskArray, error) {
-    // @todo Return a refernce?
+    // @todo Return a reference?
     size := 0
     ret := make(TaskArray, 0)
     var err error = nil
@@ -78,13 +83,14 @@ func Parse(exec *Execution) (TaskArray, error) {
                     entry.Cmd = cmd
                     entry.Desc = task.Desc[j]
                     entry.Ret = def.Type
-                    entry.Scale = task.Scale
-                    if len(task.Units) == len(task.Reports) {
-                        entry.Units = task.Units
-                    } else {
-                        err = errors.New("Task '" + task.Task + "' reports and units lengths do not match")
-                        break
-                    }
+                    //entry.Scale = task.Scale
+                    //entry.Widget = task.Widget // Validate widget type
+                    //if len(task.Units) == len(task.Reports) {
+                    //    entry.Units = task.Units
+                    //} else {
+                    //    err = errors.New("Task '" + task.Task + "' reports and units lengths do not match")
+                    //    break
+                    //}
                     ret = append(ret, entry)
                     size = size + 1
                 } else {

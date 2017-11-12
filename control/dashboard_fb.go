@@ -2,13 +2,15 @@ package control
 
 import (
     "strconv"
+
+    "github.com/shanebarnes/goto/logger"
 )
 
 const ScoutFreeboard = "scout-freeboard.json"
 
 type fbCell struct {
     Three int `json:"3"`
-//    Four  int `json:"4"`
+    //Four  int `json:"4"`
 }
 
 type fbDataSourceSettings struct {
@@ -24,18 +26,33 @@ type fbDataSource struct {
     Settings fbDataSourceSettings `json:"settings"`
 }
 
-type fbWidgetSettings struct {
+type fbWidgetTextSettings struct {
     Title     string `json:"title"`
     Size      string `json:"size"`
     Value     string `json:"value"`
     Sparkline bool   `json:"sparkline"`
     Animate   bool   `json:"animate"`
-//    Units     string `json:"units"`
+    Units     string `json:"units"`
+}
+
+type fbWidgetIndicatorSettings struct {
+    Title   string `json:"title"`
+    Value   string `json:"value"`
+    OnText  string `json:"on_text"`
+    OffText string `json:"off_text"`
+}
+
+type fbWidgetGaugeSettings struct {
+    Title string `json:"title"`
+    Value string `json:"value"`
+    Units string `json:"units"`
+    MinValue int `json:"min_value"`
+    MaxValue int `json:"max_value"`
 }
 
 type fbWidget struct {
-    Type     string           `json:"type"`
-    Settings fbWidgetSettings `json:"settings"`
+    Type     string      `json:"type"`
+    Settings interface{} `json:"settings"`
 }
 
 type fbPane struct {
@@ -81,19 +98,49 @@ func newPane(title string, width, col, row int, widgets *[]fbWidget) *fbPane {
         Widgets: *widgets}
 }
 
-func newWidget(title, value string) *fbWidget {
+func newWidgetIndicator(title, value string) *fbWidget {
     return &fbWidget{
-        Type: "text_widget",
-        Settings: *newWidgetSettings(title, value)}
+        Type: "indicator",
+        Settings: *newWidgetIndicatorSettings(title, value, "Running", "Stopped")}
 }
 
-func newWidgetSettings(title, value string) *fbWidgetSettings {
-    return &fbWidgetSettings{
+func newWidgetIndicatorSettings(title, value, onText, offText string) *fbWidgetIndicatorSettings {
+    return &fbWidgetIndicatorSettings{
+        Title: title,
+        Value: value,
+        OnText: onText,
+        OffText: offText}
+}
+
+func newWidgetGauge(title, value, units string) *fbWidget {
+    return &fbWidget{
+        Type: "gauge",
+        Settings: *newWidgetGaugeSettings(title, value, units, 0, 100)}
+}
+
+func newWidgetGaugeSettings(title, value, units string, minVal, maxVal int) *fbWidgetGaugeSettings {
+    return &fbWidgetGaugeSettings{
+        Title: title,
+        Value: value,
+        Units: units,
+        MinValue: minVal,
+        MaxValue: maxVal}
+}
+
+func newWidgetText(title, value, units string) *fbWidget {
+    return &fbWidget{
+        Type: "text_widget",
+        Settings: *newWidgetTextSettings(title, value, units)}
+}
+
+func newWidgetTextSettings(title, value, units string) *fbWidgetTextSettings {
+    return &fbWidgetTextSettings{
         Title: title,
         Size: "regular",
         Value: value,
         Sparkline: true,
-        Animate: true}
+        Animate: true,
+        Units: units}
 }
 
 func NewDashboard(reports *[][]Database) *fbModel {
@@ -104,9 +151,34 @@ func NewDashboard(reports *[][]Database) *fbModel {
         var target string = ""
 
         for j := range (*reports)[i] {
-            target = (*reports)[i][j].Target
-            value := "datasources[\"reports\"][\"" + strconv.Itoa(i) + "\"][" + strconv.Itoa(j) + "][\"dpN\"][\"y\"]"
-            widgets = append(widgets, *newWidget((*reports)[i][j].Task, value))
+            db := (*reports)[i][j]
+            target = db.Target
+
+            for k := range db.Reports {
+                value := ""
+                scale := " * " + strconv.FormatFloat(db.Reports[k].Scale, 'f', -1, 64)
+                switch db.Reports[k].Type {
+                case "DIFF":
+                    value = "datasources[\"reports\"][\"" + strconv.Itoa(i) + "\"][" + strconv.Itoa(j) + "][\"diff\"]"
+                case "RATE":
+                    value = "datasources[\"reports\"][\"" + strconv.Itoa(i) + "\"][" + strconv.Itoa(j) + "][\"rate\"]"
+                case "RAW":
+                    value = "datasources[\"reports\"][\"" + strconv.Itoa(i) + "\"][" + strconv.Itoa(j) + "][\"dpN\"][\"y\"]"
+                default:
+                }
+
+                taskName := db.Task + " [" + db.Reports[k].Type + "]"
+                switch db.Reports[k].Widget {
+                case "indicator":
+                    widgets = append(widgets, *newWidgetIndicator(taskName, value + scale))
+                case "gauge":
+                    widgets = append(widgets, *newWidgetGauge(taskName, value + scale, db.Reports[k].Units))
+                case "sparkline":
+                    widgets = append(widgets, *newWidgetText(taskName, value + scale, db.Reports[k].Units))
+                default:
+                    logger.PrintlnError("Unknown dashboard widget: " + db.Reports[k].Widget)
+                }
+            }
         }
 
         panes = append(panes, *newPane(target, 1, i + 1, 1, &widgets))

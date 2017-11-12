@@ -55,7 +55,7 @@ func (t *TargetSsh) Find() error {
         }
     }
 
-    t.client, err = ssh.Dial("tcp", t.Impl.Conf.Target.Addr + ":22", config)
+    t.client, err = ssh.Dial("tcp", t.Impl.Conf.Target.Addr, config)
 
     if err != nil {
         logger.PrintlnError("Cannot find target " + t.Impl.Conf.Target.Addr + ": " + err.Error())
