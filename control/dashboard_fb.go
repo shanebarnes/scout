@@ -127,18 +127,24 @@ func newWidgetGaugeSettings(title, value, units string, minVal, maxVal int) *fbW
         MaxValue: maxVal}
 }
 
+func newWidgetSparkline(title, value, units string) *fbWidget {
+    return &fbWidget{
+        Type: "text_widget",
+        Settings: *newWidgetTextSettings(title, value, units, true)}
+}
+
 func newWidgetText(title, value, units string) *fbWidget {
     return &fbWidget{
         Type: "text_widget",
-        Settings: *newWidgetTextSettings(title, value, units)}
+        Settings: *newWidgetTextSettings(title, value, units, false)}
 }
 
-func newWidgetTextSettings(title, value, units string) *fbWidgetTextSettings {
+func newWidgetTextSettings(title, value, units string, sparkline bool) *fbWidgetTextSettings {
     return &fbWidgetTextSettings{
         Title: title,
         Size: "regular",
         Value: value,
-        Sparkline: true,
+        Sparkline: sparkline,
         Animate: true,
         Units: units}
 }
@@ -147,8 +153,10 @@ func NewDashboard(reports *[][]Database) *fbModel {
     var panes []fbPane
 
     for i := range *reports {
-        var widgets []fbWidget
         var target string = ""
+        var widgets []fbWidget
+
+        widgets = append(widgets, *newWidgetText("sample count", "datasources[\"reports\"][\"0\"][\"0\"][\"N\"]", ""))
 
         for j := range (*reports)[i] {
             db := (*reports)[i][j]
@@ -156,7 +164,8 @@ func NewDashboard(reports *[][]Database) *fbModel {
 
             for k := range db.Reports {
                 value := ""
-                scale := " * " + strconv.FormatFloat(db.Reports[k].Scale, 'f', -1, 64)
+                xform := db.Reports[k].Xform
+
                 switch db.Reports[k].Type {
                 case "DIFF":
                     value = "datasources[\"reports\"][\"" + strconv.Itoa(i) + "\"][" + strconv.Itoa(j) + "][\"diff\"]"
@@ -167,16 +176,20 @@ func NewDashboard(reports *[][]Database) *fbModel {
                 default:
                 }
 
-                taskName := db.Task + " [" + db.Reports[k].Type + "]"
+                taskName := db.Task + " #" + db.Reports[k].Type
                 switch db.Reports[k].Widget {
-                case "indicator":
-                    widgets = append(widgets, *newWidgetIndicator(taskName, value + scale))
                 case "gauge":
-                    widgets = append(widgets, *newWidgetGauge(taskName, value + scale, db.Reports[k].Units))
+                    widgets = append(widgets, *newWidgetGauge(taskName, "(" + value + xform + ").toFixed(3)", db.Reports[k].Units))
+                case "indicator":
+                    widgets = append(widgets, *newWidgetIndicator(taskName, "(" + value + xform + ").toFixed(3)"))
                 case "sparkline":
-                    widgets = append(widgets, *newWidgetText(taskName, value + scale, db.Reports[k].Units))
+                    widgets = append(widgets, *newWidgetSparkline(taskName, "(" + value + xform + ").toFixed(3)", db.Reports[k].Units))
+                case "text":
+                    widgets = append(widgets, *newWidgetText(taskName, "(" + value + xform + ").toFixed(3)", db.Reports[k].Units))
+                case "":
+                    logger.PrintlnDebug("No dashboard widget specified for...")
                 default:
-                    logger.PrintlnError("Unknown dashboard widget: " + db.Reports[k].Widget)
+                    logger.PrintlnError("Unknown dashboard widget: '" + db.Reports[k].Widget + "'")
                 }
             }
         }

@@ -25,10 +25,10 @@ type TaskEntry struct {
 }
 
 type TaskReport struct {
-    Type   string  `json:"type"`
-    Scale  float64 `json:"scale"`
-    Units  string  `json:"units"`
-    Widget string  `json:"widget"`
+    Type   string `json:"type"`
+    Xform  string `json:"xform"`
+    Units  string `json:"units"`
+    Widget string `json:"widget"`
 }
 
 type ExecutionGroup struct {
@@ -83,14 +83,6 @@ func Parse(exec *Execution) (TaskArray, error) {
                     entry.Cmd = cmd
                     entry.Desc = task.Desc[j]
                     entry.Ret = def.Type
-                    //entry.Scale = task.Scale
-                    //entry.Widget = task.Widget // Validate widget type
-                    //if len(task.Units) == len(task.Reports) {
-                    //    entry.Units = task.Units
-                    //} else {
-                    //    err = errors.New("Task '" + task.Task + "' reports and units lengths do not match")
-                    //    break
-                    //}
                     ret = append(ret, entry)
                     size = size + 1
                 } else {

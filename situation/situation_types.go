@@ -2,6 +2,8 @@ package situation
 
 import (
     "errors"
+
+    "github.com/shanebarnes/goto/logger"
 )
 
 type Credentials struct {
@@ -21,6 +23,7 @@ type TargetGroup struct {
 
 type TargetDef struct {
     Name string `json:"name"`
+    group int   `json:"group"`
     Addr string `json:"addr"`
     Cred string `json:"cred"`
     Prot string `json:"prot"`
@@ -47,9 +50,11 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
     definitions := situ.Definitions
     credentials := situ.Credentials
 
-    for _, id := range situ.Targets {
+    for i, id := range situ.Targets {
         var exists bool
         var group TargetGroup
+
+        logger.PrintlnDebug("Parsing target group #", i)
 
         if group, exists = definitions[id]; exists {
             var cred Credentials
@@ -65,6 +70,7 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
             // todo: check for duplicate addreses?
             for _, addr := range group.Addr {
                 entry.Target.Name = group.Name
+                entry.Target.group = i
                 entry.Target.Addr = addr
                 entry.Target.Cred = group.Cred
                 entry.Target.Prot = group.Prot

@@ -1,6 +1,7 @@
 # scout
 
-Collect and analyze information from a diverse set of network-capable devices
+An extensible analytics engine designed to report on multiple compute platforms
+in real time.
 
 ## Build Status
 

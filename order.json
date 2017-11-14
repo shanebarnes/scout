@@ -1,21 +1,21 @@
 {
     "mission": "aws cluster network activity monitoring",
     "situation": {
-        "targets": [ "MACOS" ],
+        "targets": [ "MACOS", "VBOX" ],
         "definitions": {
-            "VBOX": {
-                "name": "VBox CentOS 7.4",
-                "addr": [ "192.168.1.71:22" ],
-                "cred": "CENTOS7",
-                "prot": "SSH",
-                "sys": [ "LINUX", "UNIX" ]
-            },
             "MACOS": {
                 "name": "MacBook Pro",
                 "addr": [ "" ],
                 "cred": "EXEC",
                 "prot": "EXEC",
                 "sys": [ "MACOS", "UNIX" ]
+            },
+            "VBOX": {
+                "name": "VBox CentOS 7.4",
+                "addr": [ "127.0.0.1:2222" ],
+                "cred": "CENTOS7",
+                "prot": "SSH",
+                "sys": [ "LINUX" ]
             }
         },
         "credentials": {
@@ -44,7 +44,7 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "%",
                         "widget": "gauge"
                     }
@@ -53,7 +53,7 @@
             "LINUX_NET_BYTES": {
                 "active": true,
                 "sys": "LINUX",
-                "desc": [ "network enp0s3 rx bytes", "network enp0s3 tx bytes" ],
+                "desc": [ "network enp0s3 recv", "network enp0s3 send" ],
                 "task": "UNIX_CAT",
                 "vars": [
                     [ "/sys/class/net/", "enp0s3", "/statistics/", "rx_bytes" ],
@@ -62,13 +62,13 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "B",
                         "widget": ""
                     },
                     {
                         "type": "RATE",
-                        "scale": 0.000008,
+                        "xform": "*8/1000000",
                         "units": "Mbps",
                         "widget": "sparkline"
                     }
@@ -77,7 +77,7 @@
             "LINUX_NET_RTT_MS": {
                 "active": false,
                 "sys": "LINUX",
-                "desc": [ "average ping in ms" ],
+                "desc": [ "ping to 192.168.1.254" ],
                 "task": "UNIX_PING",
                 "vars": [
                     [ "192.168.1.254", "rtt" ]
@@ -85,7 +85,7 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "ms",
                         "widget": "sparkline"
                     }
@@ -102,7 +102,7 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "",
                         "widget": "indicator"
                     }
@@ -111,7 +111,7 @@
             "LINUX_UPTIME_SEC": {
                 "active": true,
                 "sys": "LINUX",
-                "desc": [ "uptime in seconds" ],
+                "desc": [ "system uptime" ],
                 "task": "UNIX_CAT",
                 "vars": [
                     [ "/proc/uptime", " | awk '{print $1}'", "", "" ]
@@ -119,9 +119,9 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
-                        "units": "sec",
-                        "widget": "sparkline"
+                        "xform": "/86400",
+                        "units": "days",
+                        "widget": "text"
                     }
                 ]
             },
@@ -136,7 +136,7 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "%",
                         "widget": "gauge"
                     }
@@ -145,28 +145,28 @@
             "MACOS_NET_BYTES": {
                 "active": true,
                 "sys": "MACOS",
-                "desc": [ "network lo0 rx bytes", "network lo0 tx bytes" ],
+                "desc": [ "network en0 recv", "network en0 send" ],
                 "task": "MACOS_NETSTAT",
                 "vars": [
-                    [ "lo0", "6" ],
-                    [ "lo0", "9" ]
+                    [ "en0", "7" ],
+                    [ "en0", "10" ]
                 ],
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "B",
                         "widget": ""
                     },
                     {
                         "type": "DIFF",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "B",
                         "widget": ""
                     },
                     {
                         "type": "RATE",
-                        "scale": 0.000008,
+                        "xform": "*8/1000000",
                         "units": "Mbps",
                         "widget": "sparkline"
                     }
@@ -175,7 +175,7 @@
             "MACOS_NET_RTT_MS": {
                 "active": true,
                 "sys": "MACOS",
-                "desc": [ "average ping in ms" ],
+                "desc": [ "ping to google.com" ],
                 "task": "UNIX_PING",
                 "vars": [
                     [ "google.com", "round-trip" ]
@@ -183,7 +183,7 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
+                        "xform": "*1",
                         "units": "ms",
                         "widget": "sparkline"
                     }
@@ -192,7 +192,7 @@
             "MACOS_UPTIME_SEC": {
                 "active": true,
                 "sys": "MACOS",
-                "desc": [ "uptime in seconds" ],
+                "desc": [ "system uptime" ],
                 "task": "MACOS_UPTIME_SEC",
                 "vars": [
                      []
@@ -200,9 +200,9 @@
                 "reports": [
                     {
                         "type": "RAW",
-                        "scale": 1,
-                        "units": "sec",
-                        "widget": "sparkline"
+                        "xform": "/86400",
+                        "units": "days",
+                        "widget": "text"
                     }
                 ]
             }
