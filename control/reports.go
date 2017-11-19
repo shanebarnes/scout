@@ -21,6 +21,7 @@ type Database struct {
     Min float64 `json:"min"`
     Rate float64 `json:"rate"`
     Target string `json:"target"`
+    Location string `json:"location"`
     Task string `json:"task"`
     Reports []execution.TaskReport `json:"reports"`
 }
@@ -30,7 +31,7 @@ func IsNum(s string) bool {
     return err == nil
 }
 
-func NewDataBase(target, task string, reports []execution.TaskReport/*scale []float64, units []string, widget string*/) Database {
+func NewDataBase(target, location, task string, reports []execution.TaskReport/*scale []float64, units []string, widget string*/) Database {
     // @todo Return reference
     return Database{
         N: 0,
@@ -41,6 +42,7 @@ func NewDataBase(target, task string, reports []execution.TaskReport/*scale []fl
         Diff: 0,
         Rate: 0,
         Target: target,
+        Location: location,
         Task: task,
         Reports: reports}
 }

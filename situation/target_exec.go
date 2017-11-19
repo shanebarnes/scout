@@ -11,8 +11,8 @@ type TargetExec struct {
     Impl TargetImpl
 }
 
-func (t *TargetExec) New(conf TargetEntry, tasks execution.TaskArray) error {
-    return NewImpl(&t.Impl, conf, tasks)
+func (t *TargetExec) New(id int, conf TargetEntry, tasks execution.TaskArray) error {
+    return NewImpl(&t.Impl, id, conf, tasks)
 }
 
 func (t TargetExec) Find() error {

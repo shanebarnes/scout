@@ -4,36 +4,42 @@ import (
     "errors"
 
     "github.com/shanebarnes/goto/logger"
+    "github.com/shanebarnes/scout/global"
 )
 
 type Credentials struct {
-    User string `json:"user"`
-    Pass string `json:"pass"`
-    Cert string `json:"cert"`
+    Id   int    `json:"id"   sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Name string `json:"name" sql:"name TEXT NOT NULL"`
+    User string `json:"user" sql:"username TEXT NOT NULL"`
+    Pass string `json:"pass" sql:"password TEXT NOT NULL"`
+    Cert string `json:"cert" sql:"key TEXT NOT NULL"`
 }
 type CredentialsMap map[string]Credentials
 
 type TargetGroup struct {
-    Name string `json:"name"`
-    Addr []string `json:"addr"`
-    Cred string `json:"cred"`
-    Prot string `json:"prot"`
-    Sys []string `json:"sys"`
+    Id       int    `json:"id"      sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Name     string `json:"name"    sql:"name TEXT NOT NULL"`
+    Addr   []string `json:"addr"    sql:"-"`
+    CredId   int    `json:"cred_id" sql:"credential_id INTEGER NOT NULL"`
+    Cred     string `json:"cred"    sql:"-"`
+    Prot     string `json:"prot"    sql:"protocol TEXT NOT NULL"`
+    Sys    []string `json:"sys"     sql:"system TEXT NOT NULL"`
 }
 
 type TargetDef struct {
-    Name string `json:"name"`
-    group int   `json:"group"`
-    Addr string `json:"addr"`
-    Cred string `json:"cred"`
-    Prot string `json:"prot"`
-    Sys []string `json:"sys"`
+    Id        int    `json:"id"       sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Name      string `json:"name"     sql:"-"`
+    GroupId   int    `json:"group_id" sql:"group_id INTEGER NOT NULL"`
+    Addr      string `json:"addr"     sql:"address TEXT NOT NULL"`
+    Cred      string `json:"cred"     sql:"-"`
+    Prot      string `json:"prot"     sql:"-"`
+    Sys     []string `json:"sys"      sql:"-"`
 }
 type TargetMap map[string]TargetGroup
 
 type TargetEntry struct {
-    Target TargetDef
-    Credentials Credentials
+    Target TargetDef        `json:"target"      sql:"CREATE TABLE IF NOT EXISTS target_definitions"`
+    Credentials Credentials `json:"credentials" sql:"CREATE TABLE IF NOT EXISTS target_credentials"`
 }
 type TargetArr []TargetEntry
 
@@ -49,6 +55,18 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
     var err error = nil
     definitions := situ.Definitions
     credentials := situ.Credentials
+
+    db := global.GetDb()
+
+    i := 0
+    for k, v := range credentials {
+        v.Id = i
+        v.Name = k
+        credentials[k] = v
+        i = i + 1
+        db.CreateTable(&v, "target_credentials")  // @todo only call once
+        db.InsertInto(&v, "target_credentials")
+    }
 
     for i, id := range situ.Targets {
         var exists bool
@@ -67,10 +85,16 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
                 break
             }
 
-            // todo: check for duplicate addreses?
+            group.Id = i
+            group.CredId = cred.Id
+            db.CreateTable(&group, "target_groups")  // @todo only call once
+            db.InsertInto(&group, "target_groups")
+
+            // todo: check for duplicate addreses? use unique attribute in sql?
             for _, addr := range group.Addr {
+                entry.Target.Id = size
                 entry.Target.Name = group.Name
-                entry.Target.group = i
+                entry.Target.GroupId = group.Id
                 entry.Target.Addr = addr
                 entry.Target.Cred = group.Cred
                 entry.Target.Prot = group.Prot
@@ -86,6 +110,13 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
 
     if size == 0 && err == nil {
         err = errors.New("No targets found")
+    }
+
+    if size > 0 {
+        db.CreateTable(&ret[0].Target, "target_definitions")
+        for _, def := range ret {
+            db.InsertInto(&def.Target, "target_definitions")
+        }
     }
 
     return ret, err

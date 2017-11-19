@@ -13,6 +13,7 @@ import (
     "github.com/shanebarnes/goto/logger"
     "github.com/shanebarnes/scout/control"
     "github.com/shanebarnes/scout/execution"
+    "github.com/shanebarnes/scout/global"
     "github.com/shanebarnes/scout/mission"
     "github.com/shanebarnes/scout/situation"
 )
@@ -43,14 +44,20 @@ func main() {
     logger.Init(file, log.Ldate | log.Ltime | log.Lmicroseconds)
     logger.SetLevel(logger.Info)
 
+    logger.PrintlnInfo("Starting scout", mission.GetVersion())
+
     orderFile := flag.String("order", "order.json", "file containing scouting operations order")
-    /*reportFile := */flag.String("report", "report.csv", "file containing scouting report")
+    /*reportFile := */flag.String("report", "report.db", "file containing scouting report")
     flag.Usage = func() {
         fmt.Fprintf(os.Stderr, "version %s\n", mission.GetVersion())
         fmt.Fprintln(os.Stderr, "usage:")
         flag.PrintDefaults()
     }
     flag.Parse()
+
+    db := global.GetDb()
+    db.Open("scout.db")
+    defer db.Close()
 
     order := loadOrder(orderFile)
 
@@ -80,13 +87,13 @@ func main() {
         channels[i] = make(chan string, 1000)
         if arr[i].Target.Prot == "SSH" {
             ssh := new(situation.TargetSsh)
-            ssh.New(arr[i], tasks)
+            ssh.New(i, arr[i], tasks)
             ssh.Impl.Ch = &channels[i]
             ssh.Impl.Wait = &wg
             targets[i] = ssh
         } else {
             exec := new(situation.TargetExec)
-            exec.New(arr[i], tasks)
+            exec.New(i, arr[i], tasks)
             exec.Impl.Ch = &channels[i]
             exec.Impl.Wait = &wg
             targets[i] = exec

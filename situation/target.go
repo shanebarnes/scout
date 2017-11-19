@@ -10,19 +10,22 @@ import (
     "time"
 
     "github.com/shanebarnes/scout/execution"
+    "github.com/shanebarnes/scout/global"
 )
 
 type TargetImpl struct {
+    Id int
     Conf TargetEntry
     Task execution.TaskArray
     cmds string
     Ch *chan string
     NextWatch time.Time
     Wait *sync.WaitGroup
+    Db *global.DbImpl
 }
 
 type Target interface {
-    New(conf TargetEntry, t execution.TaskArray) error
+    New(id int, conf TargetEntry, t execution.TaskArray) error
     Find() error
     Watch() error
     Report() (*TargetObs, error)
@@ -40,10 +43,11 @@ type TargetObs struct {
     Val string
 }
 
-func NewImpl(t *TargetImpl, conf TargetEntry, tasks execution.TaskArray) error {
+func NewImpl(t *TargetImpl, id int, conf TargetEntry, tasks execution.TaskArray) error {
     var err error = nil
     var cmdBuffer, valBuffer bytes.Buffer
 
+    t.Id = id
     t.Conf = conf
     // Todo: move to scout parsing
     for i := range tasks {

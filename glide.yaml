@@ -3,5 +3,4 @@ import:
   - package: github.com/freeboard/freeboard
   - package: github.com/gorilla/mux
   - package: github.com/mattn/go-sqlite3
-  - package: github.com/rthornton128/goncurses
   - package: github.com/shanebarnes/goto

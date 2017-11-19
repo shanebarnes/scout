@@ -17,8 +17,8 @@ type TargetSsh struct {
     client *ssh.Client
 }
 
-func (t *TargetSsh) New(conf TargetEntry, tasks execution.TaskArray) error {
-    return NewImpl(&t.Impl, conf, tasks)
+func (t *TargetSsh) New(id int, conf TargetEntry, tasks execution.TaskArray) error {
+    return NewImpl(&t.Impl, id, conf, tasks)
 }
 
 func (t *TargetSsh) Find() error {

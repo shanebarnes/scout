@@ -156,11 +156,13 @@ func NewDashboard(reports *[][]Database) *fbModel {
         var target string = ""
         var widgets []fbWidget
 
-        widgets = append(widgets, *newWidgetText("sample count", "datasources[\"reports\"][\"0\"][\"0\"][\"N\"]", ""))
+        // @todo Add connected to address indicator to show targets that have been lost
+        widgets = append(widgets, *newWidgetText("sample count", "datasources[\"reports\"][\"" + strconv.Itoa(i) +  "\"][\"0\"][\"N\"]", ""))
 
         for j := range (*reports)[i] {
             db := (*reports)[i][j]
             target = db.Target
+            widgets = append(widgets, *newWidgetText(db.Location, "", ""))
 
             for k := range db.Reports {
                 value := ""
