@@ -41,8 +41,7 @@ func main() {
     file, _ := os.OpenFile("scout.log", os.O_APPEND | os.O_CREATE | os.O_RDWR, 0644)
     defer file.Close()
 
-    logger.Init(file, log.Ldate | log.Ltime | log.Lmicroseconds)
-    logger.SetLevel(logger.Info)
+    logger.Init(log.Ldate | log.Ltime | log.Lmicroseconds, logger.Info, file)
 
     logger.PrintlnInfo("Starting scout", mission.GetVersion())
 
