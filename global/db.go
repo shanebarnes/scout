@@ -8,6 +8,7 @@ import (
     "strings"
     "sync"
 
+    "github.com/jmoiron/sqlx"
     _ "github.com/mattn/go-sqlite3"
     "github.com/shanebarnes/goto/logger"
 )
@@ -16,7 +17,7 @@ const dbTag = "sql"
 const ignoreField = "-"
 
 type DbImpl struct {
-    db *sql.DB
+    db *sqlx.DB
 }
 
 var dbInstance *DbImpl = nil
@@ -27,6 +28,7 @@ type Db interface {
     Close() error
     CreateTable(f interface{}, table string) error
     Exec(query string) error
+    GetFields(f interface{}) string
     Insert(query string) error
     InsertInto(f interface{}, table string) error
 }
@@ -43,7 +45,7 @@ func (d *DbImpl) Open(dataSourceName string) error {
 
     os.Remove(dataSourceName)
 
-    if d.db, err = sql.Open("sqlite3", dataSourceName); err == nil {
+    if d.db, err = sqlx.Open("sqlite3", dataSourceName); err == nil {
         logger.PrintlnDebug("Opened database:", dataSourceName)
     } else {
         logger.PrintlnError(err.Error())
@@ -58,8 +60,9 @@ func (d *DbImpl) Close() error {
     return err
 }
 
-func (d *DbImpl) CreateTable(f interface{}, table string) error {
+func (d *DbImpl) CreateTable(f interface{}) error {
     var err error = nil
+    table := reflect.TypeOf(f).Elem().Name()
     v := reflect.ValueOf(f).Elem()
 
     if v.NumField() > 0 {
@@ -95,10 +98,39 @@ func (d *DbImpl) Exec(query string) error {
     if _, err = d.db.Exec(query); err == nil {
         logger.PrintlnDebug("Executed query:", query)
     } else {
-        logger.PrintlnError("Failed to execute query:", err.Error())
+        logger.PrintlnError("Failed to execute query '" + query + "':", err.Error())
     }
 
     return err
+}
+
+func (d *DbImpl) GetFields(f interface{}) string {
+    fields := ""
+
+    v := reflect.ValueOf(f).Elem()
+
+    for i := 0; i < v.NumField(); i++ {
+        field := v.Field(i)
+
+        if field.CanInterface() {
+            t := v.Type().Field(i)
+            tag := t.Tag.Get(dbTag)
+
+            if tag != ignoreField {
+                if i > 0 {
+                    fields = fields + ", "
+                }
+
+                if n := strings.Index(tag, " "); n > 0 {
+                    fields = fields + tag[:n]
+                } else {
+                    fields = fields + tag
+                }
+            }
+        }
+    }
+
+    return fields
 }
 
 func (d *DbImpl) Insert(query []string) error {
@@ -131,9 +163,10 @@ func (d *DbImpl) Insert(query []string) error {
     return err
 }
 
-func (d *DbImpl) InsertInto(f interface{}, table string) error {
+func (d *DbImpl) InsertInto(f interface{}) error {
     var err error = nil
 
+    table := reflect.TypeOf(f).Elem().Name()
     v := reflect.ValueOf(f).Elem()
 
     if v.NumField() > 0 {
@@ -163,7 +196,7 @@ func (d *DbImpl) InsertInto(f interface{}, table string) error {
 
                     switch val.Kind() {
                     case reflect.Float32, reflect.Float64:
-                        values = values + strconv.FormatFloat(val.Float(), 'E', 3, 64)
+                        values = values + strconv.FormatFloat(val.Float(), 'f', 6, 64)
                     case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
                         values = values + strconv.FormatInt(val.Int(), 10)
                     case reflect.String:
@@ -178,6 +211,34 @@ func (d *DbImpl) InsertInto(f interface{}, table string) error {
         query := insert + ") " + values + ");"
         logger.PrintlnDebug("Insert query:", query)
         err = d.Insert([]string{query})
+    }
+
+    return err
+}
+
+func (d *DbImpl) Select(query string, result interface{}) error {
+    var err error = nil
+
+    if t := reflect.TypeOf(result); t.Kind() == reflect.Ptr {
+        // @todo Eliminate need to parse package path
+        //typeStr := t.String()
+        //n := strings.LastIndexByte(typeStr, '.')
+
+        //if n != -1 && n < len(typeStr) {
+            //table := typeStr[n+1:len(typeStr)]
+            //query := "SELECT * FROM " + table + ";"
+            logger.PrintlnDebug("Insert query:", query)
+
+            var rows *sql.Rows = nil
+            if rows, err = d.db.Query(query); err == nil {
+                if err = sqlx.StructScan(rows, result); err != nil {
+                    logger.PrintlnError("Scan failed:", err)
+                }
+                rows.Close()
+            } else {
+                logger.PrintlnError("Query failed:", err)
+            }
+        //}
     }
 
     return err

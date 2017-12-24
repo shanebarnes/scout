@@ -6,17 +6,20 @@ import (
     "fmt"
     "net/http"
     "net/url"
-    "os"
-    "strconv"
+    //"os"
+    //"strconv"
+    "strings"
 
     "github.com/gorilla/mux"
     "github.com/shanebarnes/goto/logger"
     "github.com/shanebarnes/scout/execution"
+    "github.com/shanebarnes/scout/global"
     "github.com/shanebarnes/scout/mission"
 )
 
-var REPORTS *[][]Database = nil
-var TASKS *execution.TaskArray = nil
+//var REPORTS *[][]Database = nil
+//var TASKS *execution.TaskArray = nil
+// Call this the reporter?
 
 func HandleRequests(ctl *Control) {
     router := mux.NewRouter().StrictSlash(true)
@@ -31,19 +34,19 @@ func HandleRequests(ctl *Control) {
 }
 
 func loadDashboard(ctl *Control) {
-    dashboard := NewDashboard(REPORTS)
-    if b, err := json.MarshalIndent(dashboard, "", "    "); err == nil {
-        if file, err := os.OpenFile(ctl.Root + "/" + ScoutFreeboard, os.O_CREATE | os.O_RDWR, 0644); err == nil {
-            if _, err := file.Write(b); err != nil {
-                logger.PrintlnError(err.Error())
-            }
-            file.Close()
-        } else {
-            logger.PrintlnError(err.Error())
-        }
-    } else {
-        logger.PrintlnError(err.Error())
-    }
+    //dashboard := NewDashboard(REPORTS)
+    //if b, err := json.MarshalIndent(dashboard, "", "    "); err == nil {
+    //    if file, err := os.OpenFile(ctl.Root + "/" + ScoutFreeboard, os.O_CREATE | os.O_RDWR, 0644); err == nil {
+    //        if _, err := file.Write(b); err != nil {
+    //            logger.PrintlnError(err.Error())
+    //        }
+    //        file.Close()
+    //    } else {
+    //        logger.PrintlnError(err.Error())
+    //    }
+    //} else {
+    //    logger.PrintlnError(err.Error())
+    //}
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
@@ -91,30 +94,30 @@ func reportHandler(writer http.ResponseWriter, query url.Values) (map[int][]Data
 
     // @todo add subid for particular sub-reports
     // @todo add autorefresh using JS or websockets
-    for key, val := range query {
-        if key == "id" {
-            for _, i := range val {
-                if id, e := strconv.Atoi(i); e == nil {
-                    if (id < len(*REPORTS)) && (id >= 0) {
-                        reports[id] = (*REPORTS)[id]
-                    } else {
-                        err = errors.New("Report '" + i + "' not found")
-                        break
-                    }
-                } else {
-                    err = errors.New("'" + i + "' is not a number")
-                    break
-                }
-            }
-        } else {
-            err = errors.New("Key '" + key + "' not supported")
-        }
+    //for key, val := range query {
+    //    if key == "id" {
+    //        for _, i := range val {
+    //            if id, e := strconv.Atoi(i); e == nil {
+    //                if (id < len(*REPORTS)) && (id >= 0) {
+    //                    reports[id] = (*REPORTS)[id]
+    //                } else {
+    //                    err = errors.New("Report '" + i + "' not found")
+    //                    break
+    //                }
+    //            } else {
+    //                err = errors.New("'" + i + "' is not a number")
+    //                break
+    //            }
+    //        }
+    //    } else {
+    //        err = errors.New("Key '" + key + "' not supported")
+    //    }
 
-        if err != nil {
-            errorHandler(writer, http.StatusBadRequest)
-            break
-        }
-    }
+    //    if err != nil {
+    //        errorHandler(writer, http.StatusBadRequest)
+    //        break
+    //    }
+    //}
 
     return reports, err
 }
@@ -125,46 +128,53 @@ func reportsHandler(writer http.ResponseWriter, request *http.Request) {
     if query, err := queryHandler(writer, request, encoder); err == nil {
         if reports, err := reportHandler(writer, query); err == nil {
             if len(reports) == 0 {
-                for i, v := range *REPORTS {
-                    reports[i] = v
-                }
+                //for i, v := range *REPORTS {
+                //    reports[i] = v
+                //}
             }
             encoder.Encode(reports)
         }
     }
 }
 
-func taskHandler(writer http.ResponseWriter, query url.Values) (map[int]execution.TaskEntry, error) {
-    tasks := make(map[int]execution.TaskEntry)
+func taskHandler(writer http.ResponseWriter, query url.Values) (*[]execution.TaskEntry, error) {
     var err error = nil
+    var tasks []execution.TaskEntry
+    db := global.GetDb()
+    fields := db.GetFields(&execution.TaskEntry{})
+    sql := "SELECT " + fields + " FROM TaskEntry"
+    sqlClause := " WHERE "
 
     for key, val := range query {
-        if key == "id" {
-            for _, i := range val {
-                if id, e := strconv.Atoi(i); e == nil {
-                    if (id < len(*TASKS)) && (id >= 0) {
-                        tasks[id] = (*TASKS)[id]
-                    } else {
-                        err = errors.New("Task '" + i + "' not found")
-                        break
-                    }
-                } else {
-                    err = errors.New("'" + i + "' is not a number")
-                    break
-                }
-            }
-        } else {
-            // @todo Search by task system (e.g., MacOs)
+        switch strings.ToLower(key) {
+        case "active":
+            sql  = sql + sqlClause + "active IN (" + strings.Join(val, ",") + ")"
+        case "cmd":
+            sql = sql + sqlClause + "command LIKE '%" + strings.Join(val, "%' AND command LIKE '%") + "%'"
+        case "desc":
+            sql = sql + sqlClause + "description LIKE '%" + strings.Join(val, "%' AND description LIKE '%") + "%'"
+        case "groupid":
+            sql = sql + sqlClause + "group_id IN (" + strings.Join(val, ",") + ")"
+        case "id":
+            sql = sql + sqlClause + "id IN (" + strings.Join(val, ",") + ")"
+        case "name":
+            sql = sql + sqlClause + "name LIKE '%" + strings.Join(val, "%' AND name LIKE '%") + "%'"
+        default:
             err = errors.New("Key '" + key + "' not supported")
-        }
-
-        if err != nil {
-            errorHandler(writer, http.StatusBadRequest)
             break
         }
+
+        sqlClause = " AND "
     }
 
-    return tasks, err
+logger.PrintlnError("query:", sql)
+    if err == nil {
+        err = db.Select(sql, &tasks)
+    } else {
+        errorHandler(writer, http.StatusBadRequest)
+    }
+
+    return &tasks, err
 }
 
 func tasksHandler(writer http.ResponseWriter, request *http.Request) {
@@ -172,11 +182,6 @@ func tasksHandler(writer http.ResponseWriter, request *http.Request) {
 
     if query, err := queryHandler(writer, request, encoder); err == nil {
         if tasks, err := taskHandler(writer, query); err == nil {
-            if len(tasks) == 0 {
-                for i, v := range *TASKS {
-                    tasks[i] = v
-                }
-            }
             encoder.Encode(tasks)
         }
     }

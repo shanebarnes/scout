@@ -2,20 +2,21 @@ package control
 
 import (
     //"os"
-    "strconv"
+    //"strconv"
     //"strings"
-    "time"
+    //"time"
 
-    "github.com/shanebarnes/goto/logger"
+//    "github.com/shanebarnes/goto/logger"
+//    "github.com/shanebarnes/scout/global"
     "github.com/shanebarnes/scout/situation"
 )
 
-var _targets []situation.Target
+//var _targets []situation.Target
 
 func Stop() {}
 
 func Init(t []situation.Target) {
-    _targets = t
+//    _targets = t
 
     db := make([][]Database, len(t))
 
@@ -27,39 +28,51 @@ func Init(t []situation.Target) {
         }
     }
 
-    REPORTS = &db
+//    REPORTS = &db
 }
 
 func ReportThread() {
-    for {
-        groupReports := 0
+    //db := global.GetDb()
+    //var report taskReport
+    //db.CreateTable(&report, "task_reports")
 
-        for i := range _targets {
-            impl := situation.Target.GetImpl(_targets[i])
+    //for {
+    //    groupReports := 0
 
-            taskReports := 0
-            for range impl.Task {
-                if obs, err := situation.Target.Report(_targets[i]); err == nil {
-                    dp, _ := NewDataPoint(obs.Tv, obs.Dur, obs.Val)
-                    Evaluate(&dp, &((*REPORTS)[i][obs.Idx]))
-                    //val = strconv.FormatInt(int64(obs.idx), 16)
-                    //val = t.db[0].rate
-                    //db = &tdb[i][obs.idx]
+    //    for i := range _targets {
+    //        impl := situation.Target.GetImpl(_targets[i])
 
-                    taskReports = taskReports + 1
-                }
-            }
+    //        taskReports := 0
+    //        for s := range impl.Task {
+    //            if obs, err := situation.Target.Report(_targets[i]); err == nil {
+    //                //dp, _ := NewDataPoint(obs.Idx, obs.Tv, obs.Dur, obs.Val)
 
-            if taskReports > 0 {
-                logger.PrintlnDebug("Received " + strconv.Itoa(taskReports) + " reports(s) for " + strconv.Itoa(len(_targets)) + " target(s)")
-                groupReports = groupReports + 1
-            } //else {
-            //    continue
-            //}
-        }
+    //                //Evaluate(&dp, &((*REPORTS)[i][s]))//obs.Idx]))
 
-        if groupReports == 0 {
-            time.Sleep(time.Millisecond * 100)
-        }
-    }
+    //                //report.TargetId = int64(i)
+    //                //report.TaskId = int64(obs.Idx)
+    //                //report.X_Val = dp.X / 1000
+    //                //report.Y_Val = dp.Y
+    //                //db.InsertInto(&report, "task_reports")
+
+    //                //val = strconv.FormatInt(int64(obs.idx), 16)
+    //                //val = t.db[0].rate
+    //                //db = &tdb[i][obs.idx]
+
+    //                taskReports = taskReports + 1
+    //            }
+    //        }
+
+    //        if taskReports > 0 {
+    //            logger.PrintlnDebug("Received " + strconv.Itoa(taskReports) + " reports(s) for " + strconv.Itoa(len(_targets)) + " target(s)")
+    //            groupReports = groupReports + 1
+    //        } //else {
+    //        //    continue
+    //        //}
+    //    }
+
+    //    if groupReports == 0 {
+    //        time.Sleep(time.Millisecond * 100)
+    //    }
+    //}
 }

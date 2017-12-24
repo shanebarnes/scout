@@ -64,8 +64,8 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
         v.Name = k
         credentials[k] = v
         i = i + 1
-        db.CreateTable(&v, "target_credentials")  // @todo only call once
-        db.InsertInto(&v, "target_credentials")
+        db.CreateTable(&v)  // @todo only call once
+        db.InsertInto(&v)
     }
 
     for i, id := range situ.Targets {
@@ -87,8 +87,8 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
 
             group.Id = i
             group.CredId = cred.Id
-            db.CreateTable(&group, "target_groups")  // @todo only call once
-            db.InsertInto(&group, "target_groups")
+            db.CreateTable(&group)  // @todo only call once
+            db.InsertInto(&group)
 
             // todo: check for duplicate addreses? use unique attribute in sql?
             for _, addr := range group.Addr {
@@ -113,9 +113,9 @@ func Parse(situ *Situation) ([]TargetEntry, error) {
     }
 
     if size > 0 {
-        db.CreateTable(&ret[0].Target, "target_definitions")
+        db.CreateTable(&ret[0].Target)
         for _, def := range ret {
-            db.InsertInto(&def.Target, "target_definitions")
+            db.InsertInto(&def.Target)
         }
     }
 

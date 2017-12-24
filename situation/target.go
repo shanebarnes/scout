@@ -13,6 +13,13 @@ import (
     "github.com/shanebarnes/scout/global"
 )
 
+type taskReport1 struct {
+    TargetId  int64   `sql:"target_id INTEGER NOT NULL"`
+    TaskId    int64   `sql:"task_id INTEGER NOT NULL"`
+    X_Val     float64 `sql:"x_val FLOAT NOT NULL"`
+    Y_Val     float64 `sql:"y_val FLOAT NOT NULL"`
+}
+
 type TargetImpl struct {
     Id int
     Conf TargetEntry
@@ -72,6 +79,10 @@ func NewImpl(t *TargetImpl, id int, conf TargetEntry, tasks execution.TaskArray)
     t.cmds = cmdBuffer.String() + "echo -n '{\"info\":[';" + valBuffer.String() + "echo ']}'"
     t.NextWatch = time.Now()
 
+    t.Db = global.GetDb()
+    var report taskReport1
+    t.Db.CreateTable(&report)
+
     return err
 }
 
@@ -93,26 +104,32 @@ func RecordImpl(t *TargetImpl, obsData []byte, obsTime time.Duration) (error) {
     var info TargetInfo
 
     if err = json.Unmarshal(obsData, &info); err == nil {
+        var report taskReport1
+        //var obs *TargetObs = nil
         for i := range info.Info {
+            // @todo batch insert
             value := strings.Trim(string(info.Info[i]), " \r\n")
-            select {
-                case *t.Ch <- strconv.Itoa(i):
-                default:
-            }
-            select {
-                case *t.Ch <- value:
-                default:
-            }
-            select {
-                case *t.Ch <- obsTime.String():
-                default:
-            }
+            report.TargetId = int64(i)
+            report.TaskId = t.Task[i].Id
+            report.X_Val = float64(uint64(time.Now().UnixNano()) / uint64(time.Millisecond)) / 1000
+            report.Y_Val, err = strconv.ParseFloat(value, 64)
+            t.Db.InsertInto(&report)
+    //        select {
+    //            case *t.Ch <- strconv.Itoa(int(t.Task[i].Id)):
+    //            default:
+    //        }
+    //        select {
+    //            case *t.Ch <- value:
+    //            default:
+    //        }
+    //        select {
+    //            case *t.Ch <- obsTime.String():
+    //            default:
+    //        }
         }
     } else {
         // Observation data parsing failed
     }
-
-    // This is where a SQLite3 transaction should occur
 
     return err
 }

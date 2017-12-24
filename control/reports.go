@@ -7,9 +7,9 @@ import (
 )
 
 type datapoint struct {
-    X float64 `json:"x"`
-    Y float64 `json:"y"`
-    d string `json:"d"`
+    X float64 `json:"x" sql:"x REAL NOT NULL"`
+    Y float64 `json:"y" sql:"y REAL NOT NULL"`
+    d string  `json:"d" sql:"d TEXT NOT NULL"`
 }
 
 type Database struct {
@@ -47,7 +47,7 @@ func NewDataBase(target, location, task string, reports []execution.TaskReport/*
         Reports: reports}
 }
 
-func NewDataPoint(t uint64, d, y string) (datapoint, error) {
+func NewDataPoint(taskId int, t uint64, d, y string) (datapoint, error) {
     var err error = nil
     dp := datapoint{X: 0, Y:0, d:d}
     dp.X = float64(t)

@@ -67,7 +67,7 @@ func main() {
     }
 
     tasks, err2 := execution.Parse(&order.Execution)
-    control.TASKS = &tasks
+    //control.TASKS = &tasks
     if (err2 != nil ) {
         logger.PrintlnError(err2.Error())
         os.Exit(1)
@@ -106,7 +106,7 @@ func main() {
 
     control.Init(targets)
     go control.HandleRequests(&order.Control)
-    control.ReportThread()
+    //control.ReportThread()
     wg.Wait()
 }
 
