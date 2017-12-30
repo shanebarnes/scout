@@ -17,7 +17,8 @@ const dbTag = "sql"
 const ignoreField = "-"
 
 type DbImpl struct {
-    db *sqlx.DB
+    db  *sqlx.DB
+    mtx *sync.Mutex
 }
 
 var dbInstance *DbImpl = nil
@@ -36,6 +37,7 @@ type Db interface {
 func GetDb() *DbImpl {
     dbOnce.Do(func() {
         dbInstance = new(DbImpl)
+        dbInstance.mtx = &sync.Mutex{}
     })
     return dbInstance
 }
@@ -67,6 +69,8 @@ func (d *DbImpl) CreateTable(f interface{}) error {
 
     if v.NumField() > 0 {
         query := "CREATE TABLE IF NOT EXISTS " + table + " ("
+        fields := ""
+
         for i := 0; i < v.NumField(); i++ {
             f := v.Field(i)
 
@@ -75,16 +79,16 @@ func (d *DbImpl) CreateTable(f interface{}) error {
                 tag := t.Tag.Get(dbTag)
 
                 if tag != ignoreField {
-                    if i > 0 {
-                        query = query + ", "
+                    if len(fields) > 0 {
+                        fields = fields + ", "
                     }
 
-                    query = query + tag
+                    fields = fields + tag
                 }
             }
         }
 
-        query = query + ");"
+        query = query + fields + ");"
         logger.PrintlnDebug("Create query:", query)
         err = d.Exec(query)
     }
@@ -117,7 +121,7 @@ func (d *DbImpl) GetFields(f interface{}) string {
             tag := t.Tag.Get(dbTag)
 
             if tag != ignoreField {
-                if i > 0 {
+                if len(fields) > 0 {
                     fields = fields + ", "
                 }
 
@@ -137,6 +141,8 @@ func (d *DbImpl) Insert(query []string) error {
     var err error = nil
     var tx *sql.Tx = nil
 
+    d.mtx.Lock()
+
     if tx, err = d.db.Begin(); err == nil {
         for _, q := range query {
             var stmt *sql.Stmt = nil
@@ -145,7 +151,6 @@ func (d *DbImpl) Insert(query []string) error {
                 break
             }
             defer stmt.Close()
-
             _, err = stmt.Exec()
 
             if err == nil {
@@ -155,6 +160,8 @@ func (d *DbImpl) Insert(query []string) error {
             }
         }
     }
+
+    d.mtx.Unlock()
 
     if err != nil {
         logger.PrintlnError("Transaction failed to start:", err)
@@ -172,6 +179,7 @@ func (d *DbImpl) InsertInto(f interface{}) error {
     if v.NumField() > 0 {
         insert := "INSERT INTO " + table + " ("
         values := "VALUES ("
+        fields := ""
 
         for i := 0; i < v.NumField(); i++ {
             field := v.Field(i)
@@ -181,15 +189,15 @@ func (d *DbImpl) InsertInto(f interface{}) error {
                 tag := t.Tag.Get(dbTag)
 
                 if tag != ignoreField {
-                    if i > 0 {
-                        insert = insert + ", "
+                    if len(fields) > 0 {
+                        fields = fields + ", "
                         values = values + ", "
                     }
 
                     if n := strings.Index(tag, " "); n > 0 {
-                        insert = insert + tag[:n]
+                        fields = fields + tag[:n]
                     } else {
-                        insert = insert + tag
+                        fields = fields + tag
                     }
 
                     val := reflect.ValueOf(field.Interface())
@@ -208,7 +216,7 @@ func (d *DbImpl) InsertInto(f interface{}) error {
             }
         }
 
-        query := insert + ") " + values + ");"
+        query := insert + fields + ") " + values + ");"
         logger.PrintlnDebug("Insert query:", query)
         err = d.Insert([]string{query})
     }

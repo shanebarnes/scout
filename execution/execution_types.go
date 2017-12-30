@@ -29,18 +29,18 @@ type TaskEntry struct {
 }
 
 type TaskGroup struct {
-    Id   int    `sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Id   int    `sql:"id INTEGER NOT NULL"`
     Name string `sql:"name TEXT NOT NULL"`
 }
 type TaskGroupMap map[string]TaskGroup
 
 type TaskReport struct {
-    TaskId   int64  `sql:"task_id INTEGER NOT NULL"`
-    ReportId int64  `sql:"report_id INTEGER NOT NULL"`
-    Type     string `json:"type"   sql:"type TEXT NOT NULL"`
-    Xform    string `json:"xform"  sql:"xform TEXT NOT NULL"`
-    Units    string `json:"units"  sql:"units TEXT NOT NULL"`
-    Widget   string `json:"widget" sql:"widget TEXT NOT NULL"`
+    TaskId   int64  `db:"task_id"   json:"-"      sql:"task_id INTEGER NOT NULL"`
+    ReportId int64  `db:"report_id" json:"-"      sql:"report_id INTEGER NOT NULL"`
+    Type     string `db:"type"      json:"type"   sql:"type TEXT NOT NULL"`
+    Xform    string `db:"xform"     json:"xform"  sql:"xform TEXT NOT NULL"`
+    Units    string `db:"units"     json:"units"  sql:"units TEXT NOT NULL"`
+    Widget   string `db:"widget"    json:"widget" sql:"widget TEXT NOT NULL"`
 }
 
 type ExecutionGroup struct {

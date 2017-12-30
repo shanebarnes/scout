@@ -2,5 +2,7 @@ package: github.com/shanebarnes/scout
 import:
   - package: github.com/freeboard/freeboard
   - package: github.com/gorilla/mux
+  - package: github.com/jmoiron/sqlx
   - package: github.com/mattn/go-sqlite3
   - package: github.com/shanebarnes/goto
+  - package: github.com/shanebarnes/logger

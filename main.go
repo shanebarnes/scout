@@ -20,7 +20,6 @@ import (
 
 func sigHandler(ch *chan os.Signal) {
     sig := <-*ch
-    control.Stop()
     logger.PrintlnInfo("Captured sig " + sig.String())
     os.Exit(3)
 }
@@ -55,7 +54,10 @@ func main() {
     flag.Parse()
 
     db := global.GetDb()
-    db.Open("scout.db")
+    //db.Open(":memory:") // increase insert performance
+    db.Open("scout.sqlite")
+    //db.Exec("PRAGMA synchronous = NORMAL;")
+    //db.Exec("PRAGMA journal_mode = WAL;")
     defer db.Close()
 
     order := loadOrder(orderFile)
@@ -67,7 +69,6 @@ func main() {
     }
 
     tasks, err2 := execution.Parse(&order.Execution)
-    //control.TASKS = &tasks
     if (err2 != nil ) {
         logger.PrintlnError(err2.Error())
         os.Exit(1)
@@ -104,14 +105,12 @@ func main() {
         go situation.Target.Watch(targets[i])
     }
 
-    control.Init(targets)
     go control.HandleRequests(&order.Control)
-    //control.ReportThread()
     wg.Wait()
 }
 
 func loadOrder(fileName *string) Order {
-
+// defer file close
     file, _ := os.Open(*fileName)
     decoder := json.NewDecoder(file)
     order := Order{}

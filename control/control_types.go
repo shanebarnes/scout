@@ -4,15 +4,15 @@ import (
     "os"
 )
 
-type Report struct {
+type Ops struct {
     Op string `json:"op"`
 }
 
 type Control struct {
-    Root      string            `json:"root"`
-    Frequency string            `json:"frequency"`
-    Duration  string            `json:"duration"`
-    Reports   map[string]Report `json:"reports"`
+    Root      string         `json:"root"`
+    Frequency string         `json:"frequency"`
+    Duration  string         `json:"duration"`
+    Reports   map[string]Ops `json:"reports"`
 }
 
 func Parse(ctl *Control) error {

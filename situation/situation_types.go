@@ -8,7 +8,7 @@ import (
 )
 
 type Credentials struct {
-    Id   int    `json:"id"   sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Id   int    `json:"id"   sql:"id INTEGER NOT NULL"`
     Name string `json:"name" sql:"name TEXT NOT NULL"`
     User string `json:"user" sql:"username TEXT NOT NULL"`
     Pass string `json:"pass" sql:"password TEXT NOT NULL"`
@@ -17,7 +17,7 @@ type Credentials struct {
 type CredentialsMap map[string]Credentials
 
 type TargetGroup struct {
-    Id       int    `json:"id"      sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Id       int    `json:"id"      sql:"id INTEGER NOT NULL"`
     Name     string `json:"name"    sql:"name TEXT NOT NULL"`
     Addr   []string `json:"addr"    sql:"-"`
     CredId   int    `json:"cred_id" sql:"credential_id INTEGER NOT NULL"`
@@ -27,7 +27,7 @@ type TargetGroup struct {
 }
 
 type TargetDef struct {
-    Id        int    `json:"id"       sql:"id INTEGER NOT NULL PRIMARY KEY"`
+    Id        int    `json:"id"       sql:"id INTEGER NOT NULL"`
     Name      string `json:"name"     sql:"-"`
     GroupId   int    `json:"group_id" sql:"group_id INTEGER NOT NULL"`
     Addr      string `json:"addr"     sql:"address TEXT NOT NULL"`
