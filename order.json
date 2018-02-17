@@ -108,6 +108,22 @@
                     }
                 ]
             },
+            "LINUX_SOCKET_COUNT_UDP": {
+                "active": true,
+                "sys": "LINUX",
+                "desc": [ "udp socket count" ],
+                "task": "LINUX_SS",
+                "vars": [ [ "-uan -o '( sport >= 49422 and sport <= 49521 )' | wc -l" ]
+                ],
+                "reports": [
+                    {
+                        "type": "RAW",
+                        "xform": "-1",
+                        "units": "sockets",
+                        "widget": "text"
+                    }
+                ]
+            },
             "LINUX_UPTIME_SEC": {
                 "active": true,
                 "sys": "LINUX",
@@ -213,6 +229,12 @@
                 "vars": [ "#VAR1#" ],
                 "type": "float64",
                 "task": "grep 'cpu#VAR1#' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
+            },
+            "LINUX_SS": {
+                "reqs": [ "ss" ],
+                "vars": [ "#VAR1#" ],
+                "type": "uint64",
+                "task": "/usr/sbin/ss #VAR1#"
             },
             "MACOS_NETSTAT": {
                 "reqs": [ "awk", "netstat" ],
