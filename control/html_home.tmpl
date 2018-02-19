@@ -1,0 +1,10 @@
+<html>
+<head><a href="https://github.com/shanebarnes/scout" target="_blank">scout</a> {{.Version}} site map</head>
+<body>
+    <ul style="list-style-type:disc">
+        {{range .Links}}
+            <li><a href='{{.Link}}'>{{.Text}}</a></li>
+        {{end}}
+    </ul>
+</body>
+</html>
