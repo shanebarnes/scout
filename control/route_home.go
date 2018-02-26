@@ -26,6 +26,8 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	data := HomePageData{
 		Version: mission.GetVersion(),
 		Links: []Link{
+			{Link: "/dashboard", Text: "dashboard"},
+			{Link: "/group_reports?pretty", Text: "group_reports"},
 			{Link: "/reports?pretty", Text: "reports"},
 			{Link: "/statistics?pretty", Text: "statistics"},
 			{Link: "/tasks?pretty", Text: "tasks"},

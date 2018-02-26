@@ -17,21 +17,21 @@ import (
 )
 
 type ScoutReport struct {
-	ReportNum int64                  `db:"report_num"  json:"report_num"`
-	TargetId  int64                  `db:"target_id"   json:"target_id"`
-	Address   string                 `db:"address"     json:"target_location"`
-	Name      string                 `db:"name"        json:"target_name"`
-	TaskId    int64                  `db:"task_id"     json:"task_id"`
-	Task      string                 `db:"description" json:"task_name"`
-	Protocol  string                 `db:"protocol"    json:"task_protocol"`
-	Xdiff     float64                `db:"x_diff"      json:"x_diff"`
-	Xval      float64                `db:"x_val"       json:"x_val"`
-	Ydiff     float64                `db:"y_diff"      json:"y_diff"`
-	Ymax      float64                `db:"y_max"       json:"y_max"`
-	Ymin      float64                `db:"y_min"       json:"y_min"`
-	Yrate     float64                `db:"y_rate"      json:"y_rate"`
-	Yval      float64                `db:"y_val"       json:"y_val"`
-	Reports   []execution.TaskReport `db:"-"           json:"reports"`
+	ReportId int64                  `db:"report_id"   json:"report_id"`
+	TargetId int64                  `db:"target_id"   json:"target_id"`
+	Address  string                 `db:"address"     json:"target_location"`
+	Name     string                 `db:"name"        json:"target_name"`
+	TaskId   int64                  `db:"task_id"     json:"task_id"`
+	Task     string                 `db:"description" json:"task_name"`
+	Protocol string                 `db:"protocol"    json:"task_protocol"`
+	Xdiff    float64                `db:"x_diff"      json:"x_diff"`
+	Xval     float64                `db:"x_val"       json:"x_val"`
+	Ydiff    float64                `db:"y_diff"      json:"y_diff"`
+	Ymax     float64                `db:"y_max"       json:"y_max"`
+	Ymin     float64                `db:"y_min"       json:"y_min"`
+	Yrate    float64                `db:"y_rate"      json:"y_rate"`
+	Yval     float64                `db:"y_val"       json:"y_val"`
+	Reports  []execution.TaskReport `db:"-"           json:"reports"`
 }
 
 func HandleRequests(ctl *Control) {
@@ -39,6 +39,7 @@ func HandleRequests(ctl *Control) {
 	router.HandleFunc("/", HomeHandler)
 	router.HandleFunc("/dashboard", dashboardHandler)
 	router.PathPrefix("/freeboard").Handler(http.StripPrefix("/freeboard", http.FileServer(http.Dir(ctl.Root))))
+	router.HandleFunc("/group_reports", GroupReportsHandler)
 	router.HandleFunc("/reports", reportsHandler)
 	router.HandleFunc("/statistics", StatisticsHandler)
 	router.HandleFunc("/tasks", TasksHandler)
@@ -111,7 +112,7 @@ func getReports() *[]ScoutReport {
 	var scoutReports []ScoutReport
 	db := global.GetDb()
 
-	sql := "SELECT tr.report_num, tr.target_id, td.address, tg.name, tr.task_id, te.description, tg.protocol, tr.x_diff, tr.x_val, tr.y_diff, tr.y_max, tr.y_min, tr.y_rate, tr.y_val FROM TargetReport tr"
+	sql := "SELECT tr.report_id, tr.target_id, td.address, tg.name, tr.task_id, te.description, tg.protocol, tr.x_diff, tr.x_val, tr.y_diff, tr.y_max, tr.y_min, tr.y_rate, tr.y_val FROM TargetReport tr"
 	sql = sql + " LEFT JOIN TargetDef td ON td.id = tr.target_id"
 	sql = sql + " LEFT JOIN TargetGroup tg ON tg.id = td.group_id"
 	sql = sql + " LEFT JOIN TaskEntry te ON te.id = tr.task_id"
@@ -143,7 +144,7 @@ func reportHandler(writer http.ResponseWriter, query url.Values) (*[]ScoutReport
 	db := global.GetDb()
 	err = db.Select("SELECT * FROM TaskReport", &taskReports)
 
-	sql := "SELECT tr.report_num, tr.target_id, td.address, tg.name, tr.task_id, te.description, tg.protocol, tr.x_diff, tr.x_val, tr.y_diff, tr.y_max, tr.y_min, tr.y_rate, tr.y_val FROM TargetReport tr"
+	sql := "SELECT tr.report_id, tr.target_id, td.address, tg.name, tr.task_id, te.description, tg.protocol, tr.x_diff, tr.x_val, tr.y_diff, tr.y_max, tr.y_min, tr.y_rate, tr.y_val FROM TargetReport tr"
 	sql = sql + " LEFT JOIN TargetDef td ON td.id = tr.target_id"
 	sql = sql + " LEFT JOIN TargetGroup tg ON tg.id = td.group_id"
 	sql = sql + " LEFT JOIN TaskEntry te ON te.id = tr.task_id"
