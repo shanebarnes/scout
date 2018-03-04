@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/robfig/cron"
 	"github.com/shanebarnes/goto/logger"
 	"github.com/shanebarnes/scout/global"
 )
@@ -22,34 +23,30 @@ type AggregateReport struct {
 	Yval     float64 `db:"y_val"     sql:"y_val FLOAT NOT NULL"`
 }
 
-func RunAggregator() {
+func RunAggregator(ctl *Control) {
 	db := global.GetDb()
 	db.CreateTable(&AggregateReport{})
 	var reportId int64 = 0
 
-	ticker := time.NewTicker(1 * time.Second)
-	quit := make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				reportId = reportId + 1
-				createReports(reportId)
-			case <-quit:
-				ticker.Stop()
-				return
-			}
+	cron := cron.New()
+	cron.AddFunc(ctl.Frequency, func() {
+		entries := cron.Entries()
+		if entries != nil && len(entries) > 0 {
+			interval := float64(entries[0].Next.Sub(entries[0].Prev) / time.Second)
+			timeval := float64(entries[0].Prev.UnixNano()) / float64(time.Second)
+			reportTime := timeval - interval
+			reportId = reportId + 1
+			createReports(reportId, reportTime)
 		}
-	}()
+	})
+	cron.Start()
+	//defer cron.Stop()
 }
 
-func createReports(reportId int64) {
+func createReports(reportId int64, reportTime float64) {
 	db := global.GetDb()
 
-	timeval := float64(uint64(time.Now().UnixNano())/uint64(time.Millisecond)) / 1000
-	timeval = timeval - 1. // Look at last sample window (1 second for now)
-
-	sql := "SELECT " + strconv.FormatInt(reportId, 10) + " AS report_id, d.group_id, r.task_id, COUNT(*) AS targets, AVG(r.x_diff) AS x_diff, MAX(r.x_val) AS x_val, AVG(r.y_diff) AS y_diff, MAX(r.y_max) AS y_max, MIN(r.y_min) AS y_min, SUM(r.y_rate) AS y_rate, SUM(r.y_val) AS y_val FROM TargetReport r LEFT JOIN TargetDef d ON d.id = r.target_id LEFT JOIN TargetGroup g ON g.id = d.group_id WHERE r.x_val >= " + strconv.FormatFloat(timeval, 'f', -1, 64) + " GROUP BY d.group_id, r.task_id ORDER BY d.group_id, r.task_id"
+	sql := "SELECT " + strconv.FormatInt(reportId, 10) + " AS report_id, d.group_id, r.task_id, COUNT(*) AS targets, AVG(r.x_diff) AS x_diff, MAX(r.x_val) AS x_val, AVG(r.y_diff) AS y_diff, MAX(r.y_max) AS y_max, MIN(r.y_min) AS y_min, SUM(r.y_rate) AS y_rate, SUM(r.y_val) AS y_val FROM TargetReport r LEFT JOIN TargetDef d ON d.id = r.target_id LEFT JOIN TargetGroup g ON g.id = d.group_id WHERE r.x_val >= " + strconv.FormatFloat(reportTime, 'f', -1, 64) + " GROUP BY d.group_id, r.task_id ORDER BY d.group_id, r.task_id"
 
 	logger.PrintlnDebug(sql)
 

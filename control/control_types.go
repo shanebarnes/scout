@@ -1,22 +1,23 @@
 package control
 
 import (
-    "os"
+	"os"
 )
 
 type Ops struct {
-    Op string `json:"op"`
+	Op string `json:"op"`
 }
 
 type Control struct {
-    Root      string         `json:"root"`
-    Frequency string         `json:"frequency"`
-    Duration  string         `json:"duration"`
-    Reports   map[string]Ops `json:"reports"`
+	Root      string         `json:"root"`
+	Duration  string         `json:"duration"`
+	Frequency string         `json:"frequency"`
+	Limit     int64          `json:"limit"`
+	Reports   map[string]Ops `json:"reports"`
 }
 
 func Parse(ctl *Control) error {
-    _, err := os.Stat(ctl.Root)
+	_, err := os.Stat(ctl.Root)
 
-    return err
+	return err
 }

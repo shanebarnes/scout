@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/robfig/cron"
+	"github.com/shanebarnes/goto/logger"
 	"github.com/shanebarnes/scout/execution"
 	"github.com/shanebarnes/scout/global"
 )
@@ -27,15 +29,18 @@ type TargetReport struct {
 }
 
 type TargetImpl struct {
-	Id          int
-	Conf        TargetEntry
-	Task        execution.TaskArray
-	cmds        string
-	Ch          *chan string
-	NextWatch   time.Time
-	Wait        *sync.WaitGroup
 	Db          *global.DbImpl
+	Ch          *chan string
+	cmds        string
+	Conf        TargetEntry
+	CronJob     *cron.Cron
+	CronSpec    string
+	Id          int
 	RecordCache []TargetReport
+	Task        execution.TaskArray
+	Wait        *sync.WaitGroup
+	WatchCount  int64
+	WatchLimit  int64
 }
 
 type Target interface {
@@ -61,6 +66,7 @@ func NewImpl(t *TargetImpl, id int, conf TargetEntry, tasks execution.TaskArray)
 	var err error = nil
 	var cmdBuffer, valBuffer bytes.Buffer
 
+	t.CronJob = cron.New()
 	t.RecordCache = make([]TargetReport, len(tasks))
 
 	t.Id = id
@@ -86,10 +92,12 @@ func NewImpl(t *TargetImpl, id int, conf TargetEntry, tasks execution.TaskArray)
 	}
 
 	t.cmds = cmdBuffer.String() + "echo -n '{\"info\":[';" + valBuffer.String() + "echo ']}'"
-	t.NextWatch = time.Now()
 
 	t.Db = global.GetDb()
 	t.Db.CreateTable(&TargetReport{})
+
+	t.WatchCount = 0
+	t.WatchLimit = 0
 
 	return err
 }
@@ -149,19 +157,6 @@ func RecordImpl(t *TargetImpl, obsData []byte, obsTime time.Duration) error {
 			// @bug Preparing the same sql statement repeatedly doesn't make sense
 			t.Db.InsertInto(&report)
 			t.RecordCache[i] = report
-
-			//        select {
-			//            case *t.Ch <- strconv.Itoa(int(t.Task[i].Id)):
-			//            default:
-			//        }
-			//        select {
-			//            case *t.Ch <- value:
-			//            default:
-			//        }
-			//        select {
-			//            case *t.Ch <- obsTime.String():
-			//            default:
-			//        }
 		}
 	} else {
 		// Observation data parsing failed
@@ -185,6 +180,26 @@ func ReportImpl(t *TargetImpl) (*TargetObs, error) {
 	return &obs, err
 }
 
-func WatchImpl(t *TargetImpl) {
+func CheckWatchImpl(t *TargetImpl) {
+	t.WatchCount = t.WatchCount + 1
 
+	logger.PrintlnDebug("Completed watch", t.WatchCount, "of target", t.Id)
+
+	if t.WatchLimit > -1 && t.WatchCount >= t.WatchLimit {
+		StopWatchImpl(t)
+	}
+}
+
+func StartWatchImpl(t *TargetImpl, fn func()) {
+	t.Wait.Add(1)
+	logger.PrintlnInfo("Started watching target", t.Id)
+
+	t.CronJob.AddFunc(t.CronSpec, fn)
+	t.CronJob.Start()
+}
+
+func StopWatchImpl(t *TargetImpl) {
+	logger.PrintlnInfo("Stopped watching target", t.Id)
+	t.CronJob.Stop()
+	t.Wait.Done()
 }

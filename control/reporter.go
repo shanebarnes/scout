@@ -48,7 +48,7 @@ func HandleRequests(ctl *Control) {
 	time.Sleep(3000 * time.Millisecond)
 
 	loadDashboard(ctl)
-	RunAggregator()
+	RunAggregator(ctl)
 	http.ListenAndServe(":8080", router)
 }
 
