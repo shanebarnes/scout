@@ -1,7 +1,8 @@
 language: go
 go:
-- 1.11.x
+  - 1.11.x
 install:
-- bash build.sh
+  - bash build.sh
 script:
-- bash build.sh
+  - env GO111MODULE=on go build
+  - bash build.sh

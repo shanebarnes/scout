@@ -14,6 +14,8 @@ function err_handler() {
 
 trap 'err_handler' SIGINT ERR
 
+export GO111MODULE=on
+
 printf "Downloading and installing packages and dependencies...\n"
 go mod vendor -v
 git clone https://github.com/freeboard/freeboard.git vendor/github.com/freeboard/freeboard
