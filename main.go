@@ -33,8 +33,7 @@ func main() {
 		syscall.SIGABRT,
 		syscall.SIGKILL,
 		syscall.SIGSEGV,
-		syscall.SIGTERM,
-		syscall.SIGSTOP)
+		syscall.SIGTERM)
 	go sigHandler(&sigs)
 
 	file, _ := os.OpenFile("scout.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)

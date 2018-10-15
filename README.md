@@ -19,15 +19,7 @@ in real time.
 ## Build Instructions
 
 ``` shell
-$ git clone https://github.com/shanebarnes/scout $GOPATH/src/github.com/shanebarnes/scout
-$ cd $GOPATH/src/github.com/shanebarnes/scout
-$ glide install
-$ go build -v 
-```
-
-To prevent long recompile times, install the SQLite3 dependency:
-
-``` shell
-$ cd vendor/github.com/mattn/go-sqlite3
-$ go install
+$ git clone https://github.com/shanebarnes/scout.git
+$ cd scout
+$ ./build.sh
 ```

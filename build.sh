@@ -1,8 +1,5 @@
 #!/bin/bash
 
-command -v glide > /dev/null 2>&1
-cmd_glide=$?
-
 set -e
 set -o errtrace
 
@@ -17,22 +14,24 @@ function err_handler() {
 
 trap 'err_handler' SIGINT ERR
 
-#script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-#export GOPATH="$script_dir"
-#export GOBIN="${GOPATH}/bin"
-#go env
-
-#mkdir -p "$GOBIN"
-
 printf "Downloading and installing packages and dependencies...\n"
+go mod vendor -v
+git clone https://github.com/freeboard/freeboard.git vendor/github.com/freeboard/freeboard
 
-if [ $cmd_glide -eq 0 ]; then
-    glide -y glide.yaml install
-else
-    go get -v ./...
-fi
 
-printf "Compiling packages and dependencies...\n"
-go build -v -ldflags -s
+targets=
+targets="$targets darwin/amd64"
+targets="$targets linux/amd64"
+targets="$targets windows/amd64"
+
+for target in $targets; do
+    GOARCH=${target#*/}
+    GOOS=${target%/*}
+
+    printf "Compiling packages and dependencies %s...\n" "${target}"
+    bin_name="scout-${GOOS}-${GOARCH}"
+    [[ "${GOOS}" == "windows" ]] && bin_name="${bin_name}.exe"
+    go build -v -ldflags -s -o "${bin_name}"
+done
 
 exit $?
